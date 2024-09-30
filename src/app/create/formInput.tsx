@@ -29,6 +29,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { CalendarIcon } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
@@ -42,6 +43,7 @@ export const FormSchema = z.object({
 })
 
 export default function FormInput() {
+	const router = useRouter()
 	const form = useForm<z.infer<typeof FormSchema>>({
 		resolver: zodResolver(FormSchema),
 	})
@@ -51,11 +53,11 @@ export default function FormInput() {
 		const semester = data.semester
 
 		toast({
-			title: "Avaliação criada com sucesso!",
+			title: "Seleção criada com sucesso!",
 			description: "Redirecionando para a avaliação...",
 		})
 
-		window.location.href = `/${semester}${yearValue}/avaliacao`
+		router.push(`/${semester}${yearValue}/participantes`)
 	}
 
 	return (

@@ -1,6 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import FormInput from "./formField"
+import FormInput from "./formInput"
 
 export default function Create() {
 	return (

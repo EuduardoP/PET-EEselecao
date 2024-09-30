@@ -4,6 +4,7 @@ import "./globals.css"
 import { ModeToggle } from "@/components/modeToggle"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
+import { ReactQueryProvider } from "@/lib/reactQueryProvider"
 
 const geistSans = localFont({
 	src: "./fonts/GeistVF.woff",
@@ -27,24 +28,25 @@ export default function RootLayout({
 	children: React.ReactNode
 }>) {
 	return (
-		<html lang="en">
-			<link rel="icon" href="/favicon.ico" sizes="any" />
-			<body
-				className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-			>
-				<ThemeProvider
-					attribute="class"
-					defaultTheme="system"
-					enableSystem
-					disableTransitionOnChange
+		<ReactQueryProvider>
+			<html lang="en">
+				<body
+					className={`${geistSans.variable} ${geistMono.variable} antialiased`}
 				>
-					<Toaster />
-					<header className="absolute top-4 right-4">
-						<ModeToggle />
-					</header>
-					{children}
-				</ThemeProvider>
-			</body>
-		</html>
+					<ThemeProvider
+						attribute="class"
+						defaultTheme="system"
+						enableSystem
+						disableTransitionOnChange
+					>
+						<Toaster />
+						<header className="absolute top-4 right-4">
+							<ModeToggle />
+						</header>
+						{children}
+					</ThemeProvider>
+				</body>
+			</html>
+		</ReactQueryProvider>
 	)
 }
