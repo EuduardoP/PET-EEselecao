@@ -1,9 +1,11 @@
 import React from "react"
 
 export interface SubscriberData {
+	id: string
 	name: string
 	email: string
 	status: string
+	matricula: number
 	mediaApresentacao: number
 	mediaIndividual: number
 	mediaGrupo: number

@@ -4,10 +4,10 @@ import { UserContent } from "./UserContent"
 import { UserEmail } from "./UserEmail"
 import { UserFooter } from "./UserFooter"
 import { UserHeader } from "./UserHeader"
+import { UserMatricula } from "./UserMatricula"
 import { UserName } from "./UserName"
 import { UserPoints } from "./UserPoints"
 import { UserRoot } from "./UserRoot"
-import { UserStatus } from "./UserStatus"
 
 export const User = {
 	Avatar: UserAvatar,
@@ -19,5 +19,5 @@ export const User = {
 	Name: UserName,
 	Points: UserPoints,
 	Root: UserRoot,
-	Status: UserStatus,
+	Matricula: UserMatricula,
 }

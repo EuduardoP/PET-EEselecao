@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils"
+import { Separator } from "../ui/separator"
 
 export function UserFooter({
 	children,
@@ -14,7 +15,7 @@ export function UserFooter({
 				className,
 			)}
 		>
-			<hr className="col-span-4 border-t border-gray-200 my-1" />
+			<Separator className="col-span-4" />
 			{children}
 		</div>
 	)

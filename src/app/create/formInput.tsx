@@ -24,40 +24,50 @@ import {
 	SelectValue,
 } from "@/components/ui/select"
 import { toast } from "@/hooks/use-toast"
+import { createSelecao } from "@/http/api"
 import { cn } from "@/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { format } from "date-fns"
+import { addDays, format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { CalendarIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
+import type { DateRange } from "react-day-picker"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-export const FormSchema = z.object({
-	semester: z.string({
+export const createFormSchema = z.object({
+	semestre: z.string({
 		required_error: "Semestre é obrigatório",
 	}),
-	year: z.date({
-		required_error: "Data é obrigatório",
+	dateRange: z.object({
+		from: z.date(),
+		to: z.date(),
 	}),
 })
 
 export default function FormInput() {
+	const [date, setDate] = useState<DateRange | undefined>()
 	const router = useRouter()
-	const form = useForm<z.infer<typeof FormSchema>>({
-		resolver: zodResolver(FormSchema),
+	const form = useForm<z.infer<typeof createFormSchema>>({
+		resolver: zodResolver(createFormSchema),
 	})
 
-	function onSubmit(data: z.infer<typeof FormSchema>) {
-		const yearValue = format(data.year, "yyyy")
-		const semester = data.semester
+	function onSubmit(data: z.infer<typeof createFormSchema>) {
+		const yearValue = format(data.dateRange.from, "yyyy")
+		const semestre = data.semestre
 
 		toast({
 			title: "Seleção criada com sucesso!",
 			description: "Redirecionando para a avaliação...",
+			// description: (
+			// 	<pre className="bg-muted p-4 rounded-md">
+			// 		{JSON.stringify(data, null, 2)}
+			// 	</pre>
+			// ),
 		})
-
-		router.push(`/${semester}${yearValue}/participantes`)
+		createSelecao(data)
+		router.push(`/${semestre}${yearValue}/participantes`)
 	}
 
 	return (
@@ -69,7 +79,7 @@ export default function FormInput() {
 				<div className="flex gap-2 flex-1">
 					<FormField
 						control={form.control}
-						name="semester"
+						name="semestre"
 						render={({ field }) => (
 							<FormItem>
 								<Select onValueChange={field.onChange}>
@@ -92,7 +102,7 @@ export default function FormInput() {
 					/>
 					<FormField
 						control={form.control}
-						name="year"
+						name="dateRange"
 						render={({ field }) => (
 							<FormItem>
 								<Popover>
@@ -101,45 +111,44 @@ export default function FormInput() {
 											<Button
 												variant={"outline"}
 												className={cn(
-													"w-[240px] pl-3 text-left font-normal",
-													!field.value && "text-muted-foreground",
+													"w-[300px] justify-start text-left font-normal",
+													!date && "text-muted-foreground",
 												)}
 											>
-												{field.value ? (
-													format(field.value, "PPP", { locale: ptBR })
+												{!date && <CalendarIcon className="mr-2 h-4 w-4" />}
+												{date?.from ? (
+													date.to ? (
+														<>
+															{format(date.from, "dd 'de' LLL 'de' y", {
+																locale: ptBR,
+															})}{" "}
+															-{" "}
+															{format(date.to, "dd 'de' LLL 'de' y", {
+																locale: ptBR,
+															})}
+														</>
+													) : (
+														format(date.from, "dd 'de' LLL 'de' y", {
+															locale: ptBR,
+														})
+													)
 												) : (
-													<span>Qual o dia da seleção?</span>
+													<span>Qual o período de inscrição?</span>
 												)}
-												<CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
 											</Button>
 										</FormControl>
 									</PopoverTrigger>
 									<PopoverContent className="w-auto p-0" align="start">
 										<Calendar
 											locale={ptBR}
-											mode="single"
-											selected={field.value}
-											onSelect={field.onChange}
-											disabled={(date) => {
-												const today = new Date()
-
-												const firstDayCurrentMonth = new Date(
-													today.getFullYear(),
-													today.getMonth(),
-													1,
-												)
-
-												const lastDayNextMonth = new Date(
-													today.getFullYear(),
-													today.getMonth() + 2,
-													0,
-												)
-
-												return (
-													date < firstDayCurrentMonth || date > lastDayNextMonth
-												)
+											mode="range"
+											defaultMonth={date?.from}
+											selected={date}
+											onSelect={(newDate) => {
+												setDate(newDate)
+												field.onChange(newDate)
 											}}
-											initialFocus
+											numberOfMonths={2}
 										/>
 									</PopoverContent>
 								</Popover>
