@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import { User } from "@/components/User"
-import type { SubscriberData } from "@/components/User/UserRoot"
-import { Button } from "@/components/ui/button"
+import { User } from "@/components/User";
+import type { SubscriberData } from "@/components/User/UserRoot";
+import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardContent,
 	CardDescription,
 	CardHeader,
 	CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
 	Select,
 	SelectContent,
@@ -18,48 +18,49 @@ import {
 	SelectLabel,
 	SelectTrigger,
 	SelectValue,
-} from "@/components/ui/select"
-import { Skeleton } from "@/components/ui/skeleton"
-import { type SelecaoData, getInscritos, getSelecao } from "@/http/api"
-import { useQuery } from "@tanstack/react-query"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { type SelecaoData, getInscritos, getSelecao } from "@/http/api";
+import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function Participantes({
 	params,
 }: { params: { semestre: string } }) {
-	const router = useRouter()
-	const [filter, setFilter] = useState<string>("no-filter")
+	const router = useRouter();
+	const [filter, setFilter] = useState<string>("no-filter");
 
 	const { data, isLoading, error } = useQuery<SubscriberData[], Error>({
 		queryKey: ["inscritos"],
 		queryFn: () => getInscritos(),
-	})
+	});
 
+	// Garantimos que sortedData retorne sempre um array
 	const sortedData = () => {
-		if (!data) return []
+		if (!Array.isArray(data)) return [];
 
 		switch (filter) {
 			case "name":
-				return [...data].sort((a, b) => a.name.localeCompare(b.name))
+				return [...data].sort((a, b) => a.name.localeCompare(b.name));
 			case "average":
-				return [...data].sort((a, b) => b.mediaFinal - a.mediaFinal)
+				return [...data].sort((a, b) => b.mediaFinal - a.mediaFinal);
 			case "no-filter":
-				return data
+				return data;
 			default:
-				return data
+				return data;
 		}
-	}
+	};
 
 	const handleSubscriberClick = (subscriberId: string) => {
-		const currentPath = window.location.pathname
-		router.push(`${currentPath}/${subscriberId}`)
-	}
+		const currentPath = window.location.pathname;
+		router.push(`${currentPath}/${subscriberId}`);
+	};
 
 	const { data: selecao } = useQuery<SelecaoData, Error>({
 		queryKey: ["selecao"],
 		queryFn: getSelecao,
-	})
+	});
 
 	if (selecao?.data.semestre !== params.semestre) {
 		return (
@@ -75,7 +76,7 @@ export default function Participantes({
 					Voltar
 				</Button>
 			</div>
-		)
+		);
 	}
 
 	return (
@@ -118,9 +119,11 @@ export default function Participantes({
 						</div>
 					) : error ? (
 						<h3>Erro ao carregar participantes: {error.message}</h3>
+					) : sortedData().length === 0 ? (
+						<h3 className="text-center">Nenhum participante encontrado.</h3>
 					) : (
 						<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-							{sortedData()?.map((subscriber) => (
+							{sortedData().map((subscriber) => (
 								<div key={subscriber.email} className="col-span-1">
 									<div
 										className="w-full text-left data-[status=Pendente]:transition-transform data-[status=Pendente]:hover:scale-105"
@@ -155,5 +158,5 @@ export default function Participantes({
 				</CardContent>
 			</Card>
 		</div>
-	)
+	);
 }

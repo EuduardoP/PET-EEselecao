@@ -12,39 +12,17 @@ import { toast } from "@/hooks/use-toast"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { type ControllerRenderProps, useForm } from "react-hook-form"
 import * as z from "zod"
+import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group"
 
 const FormSchema = z.object({
-	emailInput: z.number().min(1).max(10),
-	individualInput: z.number().min(1).max(10),
-	grupoInput: z.number().min(1).max(10),
-	entrevistaInput: z.number().min(1).max(10),
-	membroInput: z.number().min(1).max(10),
+	emailInput: z.string().min(1),
+	individualInput: z.string().min(1),
+	grupoInput: z.string().min(1),
+	entrevistaInput: z.string().min(1),
+	membroInput: z.string().min(1),
 })
 
 type FormValues = z.infer<typeof FormSchema>
-
-interface CustomCheckboxProps {
-	field: ControllerRenderProps<FormValues, keyof FormValues>
-	label: number
-	value: number
-	onChange: (value: number) => void
-}
-
-const CustomCheckbox: React.FC<CustomCheckboxProps> = ({
-	field,
-	label,
-	value,
-	onChange,
-}) => (
-	<Button
-		className={`w-10 h-10 border-2 rounded-md flex items-center justify-center cursor-pointer mr-2 mb-2
-                ${field.value === value ? "bg-primary text-primary-foreground" : "bg-background text-foreground"}`}
-		onClick={() => onChange(value)}
-		type="button"
-	>
-		{label}
-	</Button>
-)
 
 const customLabels: Record<keyof FormValues, string> = {
 	emailInput: "Atividade da apresentação",
@@ -58,11 +36,11 @@ export default function AvaliarForm() {
 	const form = useForm<FormValues>({
 		resolver: zodResolver(FormSchema),
 		defaultValues: {
-			emailInput: 0,
-			individualInput: 0,
-			grupoInput: 0,
-			entrevistaInput: 0,
-			membroInput: 0,
+			emailInput: "0",
+			individualInput: "0",
+			grupoInput: "0",
+			entrevistaInput: "0",
+			membroInput: "0",
 		},
 	})
 
@@ -74,13 +52,6 @@ export default function AvaliarForm() {
 					{JSON.stringify(data, null, 2)}
 				</pre>
 			),
-		})
-	}
-
-	const handleCheckboxChange = (fieldName: keyof FormValues, value: number) => {
-		const currentValue = form.getValues(fieldName)
-		form.setValue(fieldName, currentValue === value ? 0 : value, {
-			shouldValidate: true,
 		})
 	}
 
@@ -97,19 +68,24 @@ export default function AvaliarForm() {
 								<FormItem>
 									<FormLabel>{customLabels[fieldName]}</FormLabel>
 									<FormControl>
-										<div className="flex flex-wrap">
-											{[...Array(10)].map((_, index) => (
-												<CustomCheckbox
-													key={`${fieldName}`}
-													field={field}
-													label={index + 1}
-													value={index + 1}
-													onChange={(value) =>
-														handleCheckboxChange(fieldName, value)
-													}
-												/>
+										<ToggleGroup
+											type="single"
+											size={"lg"}
+											variant="outline"
+											className="flex flex-wrap gap-2"
+											value={field.value.toString()}
+											onValueChange={field.onChange}
+										>
+											{Array.from({ length: 10 }, (_, index) => (
+												<ToggleGroupItem
+													key={(index + 1).toString()}
+													value={(index + 1).toString()}
+													aria-label={`Toggle item ${index + 1}`}
+												>
+													{index + 1}
+												</ToggleGroupItem>
 											))}
-										</div>
+										</ToggleGroup>
 									</FormControl>
 								</FormItem>
 							)}

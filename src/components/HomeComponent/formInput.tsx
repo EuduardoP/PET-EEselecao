@@ -25,7 +25,7 @@ import {
 	FormMessage,
 } from "../ui/form"
 
-export const usuarioFormSchema = z.object({
+export const iniciarFormSchema = z.object({
 	name: z.string().min(3, { message: "O nome deve ter pelo menos 3 letras" }),
 	email: z
 		.string({
@@ -39,18 +39,10 @@ export const usuarioFormSchema = z.object({
 		.min(9),
 })
 
-type DataType = {
-	semestre: string
-	dateRange: {
-		from: string
-		to: string
-	}
-}
-
 export function FormInput() {
 	const router = useRouter()
-	const form = useForm<z.infer<typeof usuarioFormSchema>>({
-		resolver: zodResolver(usuarioFormSchema),
+	const form = useForm<z.infer<typeof iniciarFormSchema>>({
+		resolver: zodResolver(iniciarFormSchema),
 	})
 
 	const checkEmailExists = async (email: string): Promise<boolean> => {
@@ -66,7 +58,7 @@ export function FormInput() {
 		}
 	}
 
-	async function onSubmit(data: z.infer<typeof usuarioFormSchema>) {
+	async function onSubmit(data: z.infer<typeof iniciarFormSchema>) {
 		const emailExists = await checkEmailExists(data.email)
 
 		if (emailExists) {
