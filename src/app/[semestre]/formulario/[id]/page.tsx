@@ -36,7 +36,11 @@ export default function FormularioPage({ params }: FormularioPageProps) {
 				<strong>
 					Edital:
 					<Button variant="link" asChild>
-						<Link href={selecao.data.edital} target="_blank" rel="noopeener noreferrer">
+						<Link
+							href={selecao.data.edital}
+							target="_blank"
+							rel="noopeener noreferrer"
+						>
 							Seleção {semestreText}
 						</Link>
 					</Button>

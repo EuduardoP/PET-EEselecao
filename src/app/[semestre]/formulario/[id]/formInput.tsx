@@ -15,6 +15,7 @@ import { toast } from "@/hooks/use-toast"
 import { createFormulario, getInscritos, updateFormulario } from "@/http/api"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuery } from "@tanstack/react-query"
+import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -46,6 +47,7 @@ export const usuarioFormSchema = z.object({
 })
 
 export function FormInput({ params }: { params: { id: string } }) {
+	const router = useRouter()
 	const { data: inscrito } = useQuery({
 		queryKey: ["inscritos"],
 		queryFn: () => getInscritos(params.id),
@@ -66,17 +68,28 @@ export function FormInput({ params }: { params: { id: string } }) {
 	}, [inscrito, form])
 
 	async function onSubmit(data: z.infer<typeof usuarioFormSchema>) {
-		await updateFormulario(data, params.id)
-		toast({
-			title: "Formulário enviado com sucesso!",
-			description: "Você receberá um e-mail com mais informações.",
-		})
+		try {
+			await updateFormulario(data, params.id)
+
+			toast({
+				title: "Formulário enviado com sucesso!",
+				description: "Você receberá um e-mail com mais informações.",
+			})
+
+			const currentPath = window.location.pathname
+			router.push(`${currentPath}/${params.id}/sucesso`)
+		} catch (error) {
+			toast({
+				title: "Erro ao atualizar o seu usuário",
+				description: "Informe alguém do PET-EE",
+			})
+		}
 	}
 
 	return (
 		<Form {...form}>
-			<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-				<Card className="flex flex-col gap-4 p-4 w-full container focus-within:ring-1 ring-blue-500 ring-offset-2 ring-offset-zinc-950">
+			<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
+				<Card className="flex flex-col gap-4 p-4 w-full container">
 					<FormField
 						name="email"
 						control={form.control}

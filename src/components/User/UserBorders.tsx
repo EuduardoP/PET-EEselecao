@@ -1,6 +1,6 @@
-import { toast } from "@/hooks/use-toast"
+"use client"
+
 import { changeStatus, deleteUser } from "@/http/api"
-import { queryClient } from "@/lib/reactQueryProvider"
 import { CircleCheck, CircleX, Hourglass, Trash2 } from "lucide-react"
 import { Card, CardContent } from "../ui/card"
 import {

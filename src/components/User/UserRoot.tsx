@@ -5,13 +5,21 @@ export interface SubscriberData {
 	name: string
 	email: string
 	status: string
-	matricula: number
+	matricula: string
 	mediaApresentacao: number
 	mediaIndividual: number
 	mediaGrupo: number
 	mediaEntrevista: number
 	mediaMembro: number
 	mediaFinal: number
+	semestre: string
+	identificacao: string
+	conhecimentoPET: string
+	interessePET: string
+	competenciasDesejadas: string
+	atividadesExtracurriculares: string
+	atividadesInteresse: string
+	cargaHoraria: string
 }
 
 interface UserRootProps {
