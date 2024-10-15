@@ -9,6 +9,12 @@ import { queryClient } from "@/lib/reactQueryProvider"
 import { format } from "date-fns"
 import type { z } from "zod"
 
+export interface AuthorizedUser {
+	id: string
+	email: string
+	role: "admin" | "user"
+}
+
 export interface SelecaoData {
 	data: {
 		semestre: string
@@ -111,24 +117,15 @@ export async function createSelecao(data: z.infer<typeof createFormSchema>) {
 }
 
 export async function getSelecao(): Promise<SelecaoData> {
-	try {
-		const response = await fetch(`${URL_API}/selecao`)
-		if (!response.ok) {
-			throw new Error("Network response was not ok")
-		}
-		const data: SelecaoData = await response.json()
-		if (!data) {
-			throw new Error("No data found")
-		}
-		return data
-	} catch (error) {
-		toast({
-			title: "Erro ao buscar seleção",
-			description: "Tente novamente mais tarde",
-			variant: "destructive",
-		})
-		throw error
+	const response = await fetch(`${URL_API}/selecao`)
+	if (!response.ok) {
+		throw new Error("Network response was not ok")
 	}
+	const data: SelecaoData = await response.json()
+	if (!data) {
+		throw new Error("No data found")
+	}
+	return data
 }
 
 export async function createFormulario(
@@ -201,4 +198,15 @@ export async function updateFormulario(
 		})
 		return { error: true }
 	}
+}
+
+export async function getAuthorized(): Promise<AuthorizedUser[]> {
+	const response = await fetch(`${URL_API}/authorized`)
+
+	if (!response.ok) {
+		throw new Error("Erro ao buscar autorização")
+	}
+
+	const data: AuthorizedUser[] = await response.json()
+	return data
 }
