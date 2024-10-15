@@ -1,7 +1,14 @@
 "use client"
 
 import { changeStatus, deleteUser } from "@/http/api"
-import { CircleCheck, CircleX, Hourglass, Trash2 } from "lucide-react"
+import {
+	CircleCheck,
+	CircleX,
+	Hourglass,
+	Trash2,
+	User2Icon,
+} from "lucide-react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent } from "../ui/card"
 import {
 	ContextMenu,
@@ -18,6 +25,14 @@ interface UserBordersProps {
 	colorBorders?: boolean
 	onSubscriberClick?: (subscriberEmail: string) => void
 	disableChangeStatus?: boolean
+	selecao?: {
+		semestre: string
+		dateRange: {
+			from: string
+			to: string
+		}
+		edital: string
+	}
 }
 
 export function UserBorders({
@@ -26,7 +41,9 @@ export function UserBorders({
 	onSubscriberClick,
 	disableChangeStatus,
 	colorBorders,
+	selecao,
 }: UserBordersProps) {
+	const router = useRouter()
 	if (!subscriber)
 		return (
 			<Card className="w-full md:w-auto">
@@ -57,6 +74,13 @@ export function UserBorders({
 				</Card>
 			</ContextMenuTrigger>
 			<ContextMenuContent>
+				<ContextMenuItem
+					onClick={() => router.push(`formulario/${subscriber.id}/perfil`)}
+					className="gap-2"
+				>
+					<User2Icon size={20} />
+					Perfil
+				</ContextMenuItem>
 				<ContextMenuItem
 					onClick={() => changeStatus("Aprovado", subscriber.id)}
 					className="gap-2"

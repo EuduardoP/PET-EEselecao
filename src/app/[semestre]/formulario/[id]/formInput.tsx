@@ -76,8 +76,7 @@ export function FormInput({ params }: { params: { id: string } }) {
 				description: "Você receberá um e-mail com mais informações.",
 			})
 
-			const currentPath = window.location.pathname
-			router.push(`${currentPath}/${params.id}/sucesso`)
+			router.push(`${params.id}/perfil`)
 		} catch (error) {
 			toast({
 				title: "Erro ao atualizar o seu usuário",
