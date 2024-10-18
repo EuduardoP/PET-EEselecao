@@ -1,10 +1,11 @@
 import type { Metadata } from "next"
 import localFont from "next/font/local"
 import "./globals.css"
-import { ModeToggle } from "@/components/modeToggle"
+import Header from "@/components/Header"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { ReactQueryProvider } from "@/lib/reactQueryProvider"
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
 
 const geistSans = localFont({
 	src: "./fonts/GeistVF.woff",
@@ -40,11 +41,10 @@ export default function RootLayout({
 						disableTransitionOnChange
 					>
 						<Toaster />
-						<header className="absolute top-4 right-4">
-							<ModeToggle />
-						</header>
+						<Header />
 						{children}
 					</ThemeProvider>
+					<ReactQueryDevtools initialIsOpen={false} />
 				</body>
 			</html>
 		</ReactQueryProvider>

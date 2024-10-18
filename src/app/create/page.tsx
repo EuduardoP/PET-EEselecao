@@ -1,26 +1,34 @@
-import { getAuthorized } from "@/http/api"
+import { Button } from "@/components/ui/button"
+import { type AuthorizedUser, getAuthorized, getSelecao } from "@/http/api"
 import { getServerSession } from "next-auth"
 import Image from "next/image"
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { use } from "react"
 import FormInput from "./formInput"
+import ToastHandler from "./toastHandler"
 
 export default async function Create() {
 	const session = await getServerSession()
 	const authorized = await getAuthorized()
+	const selecao = await getSelecao()
 
+	let isAuthorized = false
+	let showToast = false
 	if (!session) {
 		redirect("/login")
 	}
 
 	if (session.user?.email) {
-		const userAuthorized = authorized.find(
-			(user) => user.email === session.user?.email && user.role === "admin",
+		const userAuthorized = authorized.some(
+			(user: AuthorizedUser) => user.email === session.user?.email,
 		)
-
 		if (!userAuthorized) {
-			redirect("/")
+			showToast = true
+			isAuthorized = false
+			redirect("/denied")
+		} else {
+			showToast = true
+			isAuthorized = true
 		}
 	} else {
 		redirect("/login")
@@ -35,6 +43,16 @@ export default async function Create() {
 				</p>
 
 				<FormInput />
+				{selecao.data.semestre && (
+					<>
+						<p>Já existe uma seleção criada</p>
+						<Button asChild>
+							<Link href={`/${selecao.data.semestre}/participantes`}>
+								Ir para a seleção
+							</Link>
+						</Button>
+					</>
+				)}
 			</main>
 			<footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
 				Created by{" "}
@@ -46,6 +64,7 @@ export default async function Create() {
 					Eduardo Pires Rosa
 				</Link>
 			</footer>
+			<ToastHandler showToast={showToast} isAuthorized={isAuthorized} />
 		</div>
 	)
 }

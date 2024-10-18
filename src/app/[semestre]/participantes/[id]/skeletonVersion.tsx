@@ -1,5 +1,4 @@
 import { User } from "@/components/User"
-import AvaliarForm from "@/components/avaliarComponent/avaliarForm"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -61,9 +60,6 @@ export function SkeletonVersion() {
 					<CardHeader>
 						<CardTitle>Avaliação do participante</CardTitle>
 					</CardHeader>
-					<CardContent>
-						<AvaliarForm />
-					</CardContent>
 				</Card>
 			</main>
 		</>

@@ -2,6 +2,7 @@
 
 import { changeStatus, deleteUser } from "@/http/api"
 import {
+	Check,
 	CircleCheck,
 	CircleX,
 	Hourglass,
@@ -23,6 +24,7 @@ interface UserBordersProps {
 	children: React.ReactNode
 	subscriber?: SubscriberData
 	colorBorders?: boolean
+	authorized?: boolean
 	onSubscriberClick?: (subscriberEmail: string) => void
 	disableChangeStatus?: boolean
 	selecao?: {
@@ -41,6 +43,7 @@ export function UserBorders({
 	onSubscriberClick,
 	disableChangeStatus,
 	colorBorders,
+	authorized,
 	selecao,
 }: UserBordersProps) {
 	const router = useRouter()
@@ -81,35 +84,47 @@ export function UserBorders({
 					<User2Icon size={20} />
 					Perfil
 				</ContextMenuItem>
-				<ContextMenuItem
-					onClick={() => changeStatus("Aprovado", subscriber.id)}
-					className="gap-2"
-				>
-					<CircleCheck size={20} />
-					Aprovado
-				</ContextMenuItem>
-				<ContextMenuItem
-					onClick={() => changeStatus("Pendente", subscriber.id)}
-					className="gap-2"
-				>
-					<Hourglass size={20} />
-					Pendente
-				</ContextMenuItem>
-				<ContextMenuItem
-					onClick={() => changeStatus("Reprovado", subscriber.id)}
-					className="gap-2"
-				>
-					<CircleX size={20} />
-					Reprovado
-				</ContextMenuItem>
-				<ContextMenuSeparator />
-				<ContextMenuItem
-					onClick={() => deleteUser(subscriber.id)}
-					className="gap-2"
-				>
-					<Trash2 size={20} />
-					Remover
-				</ContextMenuItem>
+				{authorized ? (
+					<>
+						<ContextMenuItem
+							onClick={() => changeStatus("Aprovado", subscriber.id)}
+							className="gap-2"
+						>
+							<CircleCheck size={20} />
+							Aprovado
+						</ContextMenuItem>
+						<ContextMenuItem
+							onClick={() => changeStatus("Pendente", subscriber.id)}
+							className="gap-2"
+						>
+							<Hourglass size={20} />
+							Pendente
+						</ContextMenuItem>
+						<ContextMenuItem
+							onClick={() => changeStatus("Reprovado", subscriber.id)}
+							className="gap-2"
+						>
+							<CircleX size={20} />
+							Reprovado
+						</ContextMenuItem>
+						<ContextMenuSeparator />
+						<ContextMenuItem
+							onClick={() => deleteUser(subscriber.id)}
+							className="gap-2"
+						>
+							<Trash2 size={20} />
+							Remover
+						</ContextMenuItem>
+					</>
+				) : (
+					<ContextMenuItem
+						onClick={() => router.push(`participantes/${subscriber.id}?page=1`)}
+						className="gap-2"
+					>
+						<Check size={20} />
+						Avaliar
+					</ContextMenuItem>
+				)}
 			</ContextMenuContent>
 		</ContextMenu>
 	)
