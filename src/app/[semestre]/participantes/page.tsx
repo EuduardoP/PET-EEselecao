@@ -1,4 +1,4 @@
-import { fetchAuthorized, fetchParticipantes, fetchSelecao } from "@/http/db"
+import { fetchAuthorized, fetchSelecao } from "@/http/db"
 import { getServerSession } from "next-auth"
 import { ClientComponent } from "./_client"
 

@@ -11,8 +11,6 @@ export default async function ParticipantesLayout({
 	const session = await getServerSession()
 	const { data: authorized } = await fetchAuthorized()
 
-	let isAuthorized = false
-
 	if (!session) {
 		redirect("/login")
 	}
@@ -25,7 +23,6 @@ export default async function ParticipantesLayout({
 		if (!userAuthorized) {
 			redirect("/denied")
 		}
-		isAuthorized = true
 	} else {
 		redirect("/login")
 	}

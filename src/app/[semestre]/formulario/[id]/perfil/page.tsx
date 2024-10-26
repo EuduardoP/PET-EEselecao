@@ -1,11 +1,7 @@
 import { User } from "@/components/User"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { getInscritos } from "@/http/api"
 import { fetchUserById } from "@/http/db"
-import { useQuery } from "@tanstack/react-query"
-import { useRouter } from "next/navigation"
 
 interface SucessoPageProps {
 	params: { semestre: string; id: string }

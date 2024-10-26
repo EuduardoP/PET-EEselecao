@@ -1,8 +1,7 @@
 "use client"
 
 import { toast } from "@/hooks/use-toast"
-import { changeStatus, deleteUser } from "@/http/api"
-import { type SelecaoData, updateParticipanteStatus } from "@/http/db"
+import type { SelecaoData } from "@/http/db"
 import { queryClient } from "@/lib/reactQueryProvider"
 import { createSupabaseBrowser } from "@/utils/supabase/client"
 import { useMutation } from "@tanstack/react-query"
@@ -87,10 +86,7 @@ export function UserBorders({
 	const { mutateAsync: deleteUserFn } = useMutation({
 		mutationFn: async (params: { id: string }) => {
 			const supabase = createSupabaseBrowser()
-			const { error, status, statusText } = await supabase
-				.from("participantes")
-				.delete()
-				.eq("id", params.id)
+			await supabase.from("participantes").delete().eq("id", params.id)
 		},
 		onSuccess: (_, variables) => {
 			queryClient.setQueryData<SubscriberData[]>(["users"], (oldData) => {

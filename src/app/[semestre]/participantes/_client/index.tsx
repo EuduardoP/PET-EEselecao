@@ -1,7 +1,6 @@
 "use client"
 
 import { User } from "@/components/User"
-import type { SubscriberData } from "@/components/User/UserRoot"
 import { SettingsSheet } from "@/components/settingsSheet/index"
 import {
 	Card,
@@ -24,7 +23,6 @@ import type { AuthorizedUser, SelecaoData } from "@/http/db"
 import { createSupabaseBrowser } from "@/utils/supabase/client"
 import { useQuery } from "@tanstack/react-query"
 import type { Session } from "next-auth"
-import { getSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 

@@ -12,14 +12,7 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/sheet"
-import { toast } from "@/hooks/use-toast"
-import { deleteAuthorized, getAuthorized } from "@/http/api"
-import { fetchAuthorized } from "@/http/db"
-import { queryClient } from "@/lib/reactQueryProvider"
-import { createClient } from "@/utils/supabase/client"
-import { useMutation, useQuery } from "@tanstack/react-query"
 import { PlusCircle, Settings2, Trash2 } from "lucide-react"
-import { getServerSession } from "next-auth"
 import { useState } from "react"
 import { AddForm } from "./addForm"
 

@@ -53,7 +53,7 @@ export function FormInput() {
 				Array.isArray(data) && data.some((selecao) => selecao.email === email)
 
 			return emailFound
-		} catch (error) {
+		} catch {
 			return false
 		}
 	}
@@ -74,7 +74,7 @@ export function FormInput() {
 		const selecao = await getSelecao()
 
 		if (selecao && !result.error) {
-			router.push(`${selecao.data.semestre}/formulario/${result.id}`)
+			router.push(`${selecao.semestre}/formulario/${result.id}`)
 		} else {
 			toast({
 				title: "Erro",

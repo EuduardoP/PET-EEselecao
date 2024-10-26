@@ -48,7 +48,7 @@ export function AddForm({ handleClose }: AddFormProps) {
 				description: `O email ${variables.email} foi adicionado à lista de autorizados como ${variables.role}.`,
 			})
 		},
-		onError: (error) => {
+		onError: () => {
 			toast({
 				title: "Erro ao adicionar autorizado",
 				description:

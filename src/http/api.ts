@@ -54,7 +54,7 @@ export async function changeStatus(status: string, id: string) {
 				queryKey: ["inscritos"],
 			})
 		}
-	} catch (error) {
+	} catch {
 		toast({
 			title: "Erro ao atualizar status",
 			description: "Tente novamente mais tarde",

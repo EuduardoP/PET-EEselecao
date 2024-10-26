@@ -1,17 +1,15 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import { getInscritos, getSelecao } from "@/http/api"
+import { fetchSelecao } from "@/http/db"
 import Link from "next/link"
-import { use } from "react"
 import { FormInput } from "./formInput"
 
 interface FormularioPageProps {
 	params: { semestre: string; id: string }
 }
-export default function FormularioPage({ params }: FormularioPageProps) {
-	const selecao = use(getSelecao())
+export default async function FormularioPage({ params }: FormularioPageProps) {
+	const { data: selecao } = await fetchSelecao()
 	const semestreText = `${params.semestre.slice(2)}/${Number.parseInt(params.semestre.slice(0, 2))}`
 	return (
 		<main className="flex flex-col items-center justify-center w-full h-full p-5 lg:px-[20rem] gap-4">
@@ -36,7 +34,7 @@ export default function FormularioPage({ params }: FormularioPageProps) {
 					Edital:
 					<Button variant="link" asChild>
 						<Link
-							href={selecao.edital}
+							href={selecao?.[0]?.edital || "#"}
 							target="_blank"
 							rel="noopeener noreferrer"
 						>

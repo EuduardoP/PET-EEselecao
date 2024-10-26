@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { toast } from "@/hooks/use-toast"
-import { createFormulario, getInscritos, updateFormulario } from "@/http/api"
+import { getInscritos, updateFormulario } from "@/http/api"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
@@ -77,7 +77,7 @@ export function FormInput({ params }: { params: { id: string } }) {
 			})
 
 			router.push(`${params.id}/perfil`)
-		} catch (error) {
+		} catch {
 			toast({
 				title: "Erro ao atualizar o seu usuário",
 				description: "Informe alguém do PET-EE",

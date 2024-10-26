@@ -1,6 +1,5 @@
 import { Avaliar } from "@/components/Avaliar"
 import { useSearchParams } from "next/navigation"
-import { useState } from "react"
 
 export default function AvaliarForms() {
 	const searchParams = useSearchParams()
