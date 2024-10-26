@@ -6,7 +6,7 @@ import Image from "next/image"
 import Link from "next/link"
 
 export function isSelecaoOpen(dateFrom: string, dateTo: string) {
-	const currentDate = new Date("2024-10-02").toISOString().split("T")[0]
+	const currentDate = new Date().toISOString().split("T")[0]
 	const from = new Date(dateFrom).toISOString().split("T")[0]
 	const to = new Date(dateTo).toISOString().split("T")[0]
 
@@ -26,6 +26,17 @@ export default async function Home() {
 					Participe da seleção do PET Engenharia Elétrica
 				</p>
 
+				{!selecao ? (
+					<div className="flex w-96 h-14 items-center gap-2 bg-transparent p-2 rounded-xl border border-zinc-800 focus-within:ring-1 ring-blue-500 ring-offset-2 ring-offset-zinc-950 justify-center">
+						Não há seleção neste momento
+					</div>
+				) : isOpen ? (
+					<FormInput />
+				) : (
+					<div className="flex w-96 h-14 items-center gap-2 bg-transparent p-2 rounded-xl border border-zinc-800 focus-within:ring-1 ring-blue-500 ring-offset-2 ring-offset-zinc-950 justify-center">
+						As inscrições estão encerradas
+					</div>
+				)}
 				{!selecao ? (
 					<div className="flex w-96 h-14 items-center gap-2 bg-transparent p-2 rounded-xl border border-zinc-800 focus-within:ring-1 ring-blue-500 ring-offset-2 ring-offset-zinc-950 justify-center">
 						Não há seleção neste momento
