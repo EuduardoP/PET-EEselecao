@@ -1,5 +1,6 @@
 "use client"
 
+import type { SubscriberData } from "@/components/User/UserRoot"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import {
@@ -8,11 +9,12 @@ import {
 	FormField,
 	FormItem,
 	FormLabel,
+	FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { toast } from "@/hooks/use-toast"
-import { getInscritos, updateFormulario } from "@/http/api"
+import { createSupabaseBrowser } from "@/utils/supabase/client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
@@ -48,32 +50,52 @@ export const usuarioFormSchema = z.object({
 
 export function FormInput({ params }: { params: { id: string } }) {
 	const router = useRouter()
-	const { data: inscrito } = useQuery({
-		queryKey: ["inscritos"],
-		queryFn: () => getInscritos(params.id),
+	const { data: inscrito, isFetched } = useQuery<SubscriberData>({
+		queryKey: ["inscrito"],
+		queryFn: async () => {
+			const supabase = createSupabaseBrowser()
+			const { data } = await supabase
+				.from("participantes")
+				.select("*")
+				.eq("id", params.id)
+				.single()
+			return data
+		},
 	})
 
 	const form = useForm<z.infer<typeof usuarioFormSchema>>({
 		resolver: zodResolver(usuarioFormSchema),
+		shouldFocusError: true,
 	})
 
 	useEffect(() => {
-		if (inscrito && inscrito.length > 0) {
+		if (isFetched && inscrito) {
 			form.reset({
-				email: inscrito[0].email,
-				name: inscrito[0].name,
-				matricula: inscrito[0].matricula.toString(),
+				email: inscrito.email,
+				name: inscrito.name,
+				matricula: inscrito.matricula.toString(),
+				semestre: inscrito.semestre,
+				identificacao: inscrito.identificacao,
+				conhecimentoPET: inscrito.conhecimentoPET,
+				interessePET: inscrito.interessePET,
+				competenciasDesejadas: inscrito.competenciasDesejadas,
+				atividadesExtracurriculares: inscrito.atividadesExtracurriculares,
+				atividadesInteresse: inscrito.atividadesInteresse,
+				cargaHoraria: inscrito.cargaHoraria,
 			})
 		}
-	}, [inscrito, form])
+	}, [isFetched, inscrito, form])
 
 	async function onSubmit(data: z.infer<typeof usuarioFormSchema>) {
 		try {
-			await updateFormulario(data, params.id)
-
+			const supabase = createSupabaseBrowser()
+			await supabase
+				.from("participantes")
+				.update({ ...data, status: "Pendente" })
+				.eq("id", params.id)
 			toast({
 				title: "Formulário enviado com sucesso!",
-				description: "Você receberá um e-mail com mais informações.",
+				description: "Você receberá um e-mail para informar de novas etapas",
 			})
 
 			router.push(`${params.id}/perfil`)
@@ -98,6 +120,7 @@ export function FormInput({ params }: { params: { id: string } }) {
 								<FormControl>
 									<Input placeholder="Sua resposta" {...field} />
 								</FormControl>
+								<FormMessage />
 							</FormItem>
 						)}
 					/>
@@ -112,6 +135,7 @@ export function FormInput({ params }: { params: { id: string } }) {
 								<FormControl>
 									<Input placeholder="Sua resposta" {...field} />
 								</FormControl>
+								<FormMessage />
 							</FormItem>
 						)}
 					/>
@@ -127,6 +151,7 @@ export function FormInput({ params }: { params: { id: string } }) {
 								<FormControl>
 									<Input placeholder="Sua resposta" {...field} />
 								</FormControl>
+								<FormMessage />
 							</FormItem>
 						)}
 					/>
@@ -159,6 +184,7 @@ export function FormInput({ params }: { params: { id: string } }) {
 										))}
 									</ToggleGroup>
 								</FormControl>
+								<FormMessage />
 							</FormItem>
 						)}
 					/>
@@ -216,6 +242,7 @@ export function FormInput({ params }: { params: { id: string } }) {
 										</ToggleGroupItem>
 									</ToggleGroup>
 								</FormControl>
+								<FormMessage />
 							</FormItem>
 						)}
 					/>
@@ -231,6 +258,7 @@ export function FormInput({ params }: { params: { id: string } }) {
 								<FormControl>
 									<Input placeholder="Sua resposta" {...field} />
 								</FormControl>
+								<FormMessage />
 							</FormItem>
 						)}
 					/>
@@ -249,6 +277,7 @@ export function FormInput({ params }: { params: { id: string } }) {
 								<FormControl>
 									<Input placeholder="Sua resposta" {...field} />
 								</FormControl>
+								<FormMessage />
 							</FormItem>
 						)}
 					/>
@@ -267,6 +296,7 @@ export function FormInput({ params }: { params: { id: string } }) {
 								<FormControl>
 									<Input placeholder="Sua resposta" {...field} />
 								</FormControl>
+								<FormMessage />
 							</FormItem>
 						)}
 					/>
@@ -284,6 +314,7 @@ export function FormInput({ params }: { params: { id: string } }) {
 								<FormControl>
 									<Input placeholder="Sua resposta" {...field} />
 								</FormControl>
+								<FormMessage />
 							</FormItem>
 						)}
 					/>
@@ -300,11 +331,9 @@ export function FormInput({ params }: { params: { id: string } }) {
 									no PET?*
 								</FormLabel>
 								<FormControl>
-									<Input
-										placeholder="Sua resposta"
-										{...field} // Conecta o campo de entrada ao hook de formulário
-									/>
+									<Input placeholder="Sua resposta" {...field} />
 								</FormControl>
+								<FormMessage />
 							</FormItem>
 						)}
 					/>
@@ -321,16 +350,19 @@ export function FormInput({ params }: { params: { id: string } }) {
 									do PET durante a semana (incluindo sábados)?
 								</FormLabel>
 								<FormControl>
-									<Input
-										placeholder="Sua resposta"
-										{...field} // Conecta o campo de entrada ao hook de formulário
-									/>
+									<Input placeholder="Sua resposta" {...field} />
 								</FormControl>
+								<FormMessage />
 							</FormItem>
 						)}
 					/>
 				</Card>
-				<Button type="submit">Enviar</Button>
+				<div className="flex justify-start items-center gap-4">
+					<Button type="submit">Enviar</Button>
+					{form.formState.isSubmitted && !form.formState.isValid && (
+						<h2 className="text-red-500">Campos não totalmente preenchidos</h2>
+					)}
+				</div>
 			</form>
 		</Form>
 	)

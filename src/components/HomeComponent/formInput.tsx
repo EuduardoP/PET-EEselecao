@@ -11,11 +11,13 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/hooks/use-toast"
-import { createFormulario, getInscritos, getSelecao } from "@/http/api"
+import type { SelecaoData } from "@/http/db"
+import { createSupabaseBrowser } from "@/utils/supabase/client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import z from "zod"
+import type { SubscriberData } from "../User/UserRoot"
 import {
 	Form,
 	FormControl,
@@ -24,6 +26,8 @@ import {
 	FormLabel,
 	FormMessage,
 } from "../ui/form"
+
+const supabase = createSupabaseBrowser()
 
 export const iniciarFormSchema = z.object({
 	name: z.string().min(3, { message: "O nome deve ter pelo menos 3 letras" }),
@@ -47,10 +51,12 @@ export function FormInput() {
 
 	const checkEmailExists = async (email: string): Promise<boolean> => {
 		try {
-			const data = await getInscritos()
+			const { data } = await supabase
+				.from("participantes")
+				.select<"participantes", SubscriberData>()
 
 			const emailFound =
-				Array.isArray(data) && data.some((selecao) => selecao.email === email)
+				Array.isArray(data) && data.some((inscrito) => inscrito.email === email)
 
 			return emailFound
 		} catch {
@@ -70,11 +76,36 @@ export function FormInput() {
 			return
 		}
 
-		const result = await createFormulario(data)
-		const selecao = await getSelecao()
+		const { data: newParticipante, error } = await supabase
+			.from("participantes")
+			.insert([
+				{
+					name: data.name,
+					email: data.email,
+					matricula: data.matricula,
+				},
+			])
+			.select()
+			.single()
 
-		if (selecao && !result.error) {
-			router.push(`${selecao.semestre}/formulario/${result.id}`)
+		if (error) {
+			toast({
+				title: "Erro ao cadastrar participante",
+				description: "Tente novamente mais tarde",
+				variant: "destructive",
+			})
+			return { error }
+		}
+		const { data: selecao } = await supabase
+			.from("selecao")
+			.select<"selecao", SelecaoData>()
+			.single()
+		if (selecao && !error) {
+			toast({
+				title: "Cadastro realizado com sucesso!",
+				description: "Você será redirecionado para o formulário em instantes",
+			})
+			router.push(`${selecao.semestre}/formulario/${newParticipante.id}`)
 		} else {
 			toast({
 				title: "Erro",
@@ -83,7 +114,6 @@ export function FormInput() {
 			})
 		}
 	}
-
 	return (
 		<Form {...form}>
 			<form className="flex items-center gap-2 bg-transparent p-2 rounded-xl border border-zinc-800 focus-within:ring-1 ring-blue-500 ring-offset-2 ring-offset-zinc-950">

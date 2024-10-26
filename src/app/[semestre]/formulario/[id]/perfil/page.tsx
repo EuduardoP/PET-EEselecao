@@ -1,7 +1,11 @@
 import { User } from "@/components/User"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { fetchUserById } from "@/http/db"
+import { fetchSelecao, fetchUserById } from "@/http/db"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
+import Link from "next/link"
 
 interface SucessoPageProps {
 	params: { semestre: string; id: string }
@@ -9,6 +13,7 @@ interface SucessoPageProps {
 
 export default async function Sucesso({ params }: SucessoPageProps) {
 	const { data: inscrito } = await fetchUserById(params.id)
+	const { data: selecao } = await fetchSelecao()
 
 	return (
 		<>
@@ -16,6 +21,24 @@ export default async function Sucesso({ params }: SucessoPageProps) {
 				<h2 className="scroll-m-20 pb-2 text-3xl font-semibold tracking-tight text-center">
 					Essas são as respostas que iremos receber.
 				</h2>
+				<sub className="text-sm items-center">
+					Você pode editar o quanto quiser até dia{" "}
+					{selecao?.[0]?.date_to
+						? format(
+								new Date(`${selecao[0].date_to}T00:00:00`),
+								"dd 'de' MMMM",
+								{
+									locale: ptBR,
+								},
+							)
+						: " "}
+					, basta acessar o formulário com seu id{" "}
+					<Button asChild variant={"link"}>
+						<Link href={`/${params.semestre}/formulario/${params.id}`}>
+							<strong>{params.id}</strong>
+						</Link>
+					</Button>
+				</sub>
 				{inscrito && (
 					<User.Root data={[inscrito]} className="w-full lg:w-1/2">
 						<User.Borders subscriber={inscrito} disableChangeStatus>

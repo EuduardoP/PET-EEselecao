@@ -1,3 +1,4 @@
+import { isSelecaoOpen } from "@/app/page"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -10,6 +11,15 @@ interface FormularioPageProps {
 }
 export default async function FormularioPage({ params }: FormularioPageProps) {
 	const { data: selecao } = await fetchSelecao()
+	if (selecao && isSelecaoOpen(selecao[0].date_from, selecao[0].date_to)) {
+		return (
+			<main className="flex flex-col items-center justify-center w-full h-full p-5 lg:px-[20rem] gap-4">
+				<Card className="flex flex-col gap-4 p-4 w-full container text-center">
+					Seleção encerrada, você não pode mais editar seu formulário.
+				</Card>
+			</main>
+		)
+	}
 	const semestreText = `${params.semestre.slice(2)}/${Number.parseInt(params.semestre.slice(0, 2))}`
 	return (
 		<main className="flex flex-col items-center justify-center w-full h-full p-5 lg:px-[20rem] gap-4">
