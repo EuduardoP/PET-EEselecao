@@ -1,13 +1,12 @@
-// app/page.tsx
+import ClientComponent from "@/components/HomeComponent/clientPage"
 import { FormInput } from "@/components/HomeComponent/formInput"
-import { getSelecao } from "@/http/api"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
+import { Toaster } from "@/components/ui/toaster"
+import { fetchSelecao } from "@/http/db"
 import Image from "next/image"
 import Link from "next/link"
 
 export default async function Home() {
-	const selecao = await getSelecao()
+	const { data: selecao, error } = await fetchSelecao()
 	return (
 		<div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-pattern bg-no-repeat bg-center">
 			<main className="flex flex-col gap-8 row-start-2 -mt-52 items-center justify-center">
@@ -18,32 +17,7 @@ export default async function Home() {
 
 				<FormInput />
 
-				{selecao && (
-					<div className="text-center">
-						<p>
-							As inscrições começam no dia{" "}
-							<strong>
-								{format(
-									new Date(`${selecao.data.dateRange.from}T23:59:59Z`),
-									"dd 'de' MMM yyyy",
-									{
-										locale: ptBR,
-									},
-								)}
-							</strong>{" "}
-							e vão até{" "}
-							<strong>
-								{format(
-									new Date(`${selecao.data.dateRange.to}T23:59:59Z`),
-									"dd 'de' MMM yyyy",
-									{
-										locale: ptBR,
-									},
-								)}
-							</strong>
-						</p>
-					</div>
-				)}
+				<ClientComponent error={error} selecao={selecao} />
 			</main>
 			<footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
 				Criado por{" "}
@@ -55,6 +29,8 @@ export default async function Home() {
 					Eduardo Pires Rosa
 				</Link>
 			</footer>
+
+			<Toaster />
 		</div>
 	)
 }

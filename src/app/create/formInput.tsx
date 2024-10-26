@@ -72,8 +72,9 @@ export default function FormInput() {
 			// 	</pre>
 			// ),
 		})
-		createSelecao(data)
-		router.push(`/${semestre}${yearValue}/participantes`)
+		console.log(data)
+		//createSelecao(data)
+		//router.push(`/${semestre}${yearValue}/participantes`)
 	}
 
 	return (

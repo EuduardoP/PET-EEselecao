@@ -1,4 +1,5 @@
-const URL_API = "http://localhost:3000"
+const URL_API = process.env.SUPABASE_URL
+const API_KEY = process.env.SUPABASE_ANON_KEY
 
 import type { usuarioFormSchema } from "@/app/[semestre]/formulario/[id]/formInput"
 import type { createFormSchema } from "@/app/create/formInput"
@@ -9,26 +10,23 @@ import { queryClient } from "@/lib/reactQueryProvider"
 import { format } from "date-fns"
 import type { z } from "zod"
 
-export interface AuthorizedUser {
-	id: string
-	email: string
-	role: "admin" | "user"
-}
-
 export interface SelecaoData {
-	data: {
-		semestre: string
-		dateRange: {
-			from: string
-			to: string
-		}
-		edital: string
-	}
+	semestre: string
+	date_from: string
+	date_to: string
+	edital: string
 }
 
 export async function getInscritos(id?: string): Promise<SubscriberData[]> {
-	const url = id ? `${URL_API}/participantes/${id}` : `${URL_API}/participantes`
-	const response = await fetch(url)
+	const url = id
+		? `${URL_API}/participantes?id=eq.${id}`
+		: `${URL_API}/participantes`
+	const response = await fetch(url, {
+		headers: {
+			"Content-Type": "application/json",
+			apikey: `${API_KEY}`,
+		},
+	})
 
 	if (!response.ok) {
 		throw new Error("Erro ao buscar inscritos")
@@ -40,10 +38,11 @@ export async function getInscritos(id?: string): Promise<SubscriberData[]> {
 
 export async function changeStatus(status: string, id: string) {
 	try {
-		const response = await fetch(`${URL_API}/participantes/${id}`, {
+		const response = await fetch(`${URL_API}/participantes?id=eq.${id}`, {
 			method: "PATCH",
 			headers: {
 				"Content-Type": "application/json",
+				apikey: `${API_KEY}`,
 			},
 			body: JSON.stringify({
 				status: `${status}`,
@@ -63,13 +62,13 @@ export async function changeStatus(status: string, id: string) {
 		})
 	}
 }
-
 export async function deleteUser(id: string) {
 	try {
-		const response = await fetch(`${URL_API}/participantes/${id}`, {
+		const response = await fetch(`${URL_API}/participantes?id=eq.${id}`, {
 			method: "DELETE",
 			headers: {
 				"Content-Type": "application/json",
+				apikey: `${API_KEY}`,
 			},
 		})
 
@@ -102,6 +101,7 @@ export async function createSelecao(data: z.infer<typeof createFormSchema>) {
 			method: "PUT",
 			headers: {
 				"Content-Type": "application/json",
+				apikey: `${API_KEY}`,
 			},
 			body: JSON.stringify({
 				data: formattedData,
@@ -117,7 +117,12 @@ export async function createSelecao(data: z.infer<typeof createFormSchema>) {
 }
 
 export async function getSelecao(): Promise<SelecaoData> {
-	const response = await fetch(`${URL_API}/selecao`)
+	const response = await fetch(`${URL_API}/selecao`, {
+		headers: {
+			"Content-Type": "application/json",
+			apikey: `${API_KEY}`,
+		},
+	})
 	if (!response.ok) {
 		throw new Error("Network response was not ok")
 	}
@@ -134,7 +139,10 @@ export async function createFormulario(
 	try {
 		const response = await fetch(`${URL_API}/participantes`, {
 			method: "POST",
-			headers: { "Content-Type": "application/json" },
+			headers: {
+				"Content-Type": "application/json",
+				apikey: `${API_KEY}`,
+			},
 			body: JSON.stringify({ ...values, status: "Pendente" }),
 		})
 
@@ -170,9 +178,12 @@ export async function updateFormulario(
 	id: string,
 ): Promise<{ error: boolean }> {
 	try {
-		const response = await fetch(`${URL_API}/participantes/${id}`, {
+		const response = await fetch(`${URL_API}/participantes?id=eq.${id}`, {
 			method: "PUT",
-			headers: { "Content-Type": "application/json" },
+			headers: {
+				"Content-Type": "application/json",
+				apikey: `${API_KEY}`,
+			},
 			body: JSON.stringify({ ...values, status: "Pendente" }),
 		})
 
@@ -200,13 +211,79 @@ export async function updateFormulario(
 	}
 }
 
-export async function getAuthorized(): Promise<AuthorizedUser[]> {
-	const response = await fetch(`${URL_API}/authorized`)
+export async function addAuthorized(data: { email: string; role: string }) {
+	try {
+		const response = await fetch(`${URL_API}/autorizados`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				apikey: `${API_KEY}`,
+			},
+			body: JSON.stringify(data),
+		})
 
-	if (!response.ok) {
-		throw new Error("Erro ao buscar autorização")
+		if (!response.ok) {
+			throw new Error("Erro ao adicionar autorizado")
+		}
+
+		return { error: false }
+	} catch (error) {
+		toast({
+			title: "Erro ao adicionar autorizado",
+			description:
+				"Houve um erro ao tentar adicionar o autorizado. Tente novamente.",
+		})
+		return { error: true }
 	}
+}
 
-	const data: AuthorizedUser[] = await response.json()
-	return data
+export async function deleteAuthorized(email: string) {
+	try {
+		const getResponse = await fetch(
+			`${URL_API}/autorizados?email=eq.${email}`,
+			{
+				headers: {
+					"Content-Type": "application/json",
+					apikey: `${API_KEY}`,
+				},
+			},
+		)
+		if (!getResponse.ok) {
+			toast({
+				title: "Erro ao buscar autorizado",
+			})
+		}
+		const authorizedUsers = await getResponse.json()
+		console.log(authorizedUsers)
+		if (
+			!authorizedUsers ||
+			authorizedUsers.length === 0 ||
+			!authorizedUsers[0].id
+		) {
+			toast({
+				title: "Erro autorizado não encontrado",
+			})
+		}
+
+		const response = await fetch(
+			`${URL_API}/autorizados?id=eq.${authorizedUsers[0].id}`,
+			{
+				method: "DELETE",
+				headers: {
+					"Content-Type": "application/json",
+					apikey: `${API_KEY}`,
+				},
+			},
+		)
+		if (!response.ok) {
+			throw new Error("Erro ao deletar autorizado")
+		}
+		return { error: false }
+	} catch (error) {
+		toast({
+			title: "Erro ao deletar autorizado",
+			description: `Ocorreu o erro ${error}`,
+		})
+		return { error: true }
+	}
 }

@@ -12,7 +12,6 @@ interface FormularioPageProps {
 }
 export default function FormularioPage({ params }: FormularioPageProps) {
 	const selecao = use(getSelecao())
-	console.log(selecao.data.semestre)
 	const semestreText = `${params.semestre.slice(2)}/${Number.parseInt(params.semestre.slice(0, 2))}`
 	return (
 		<main className="flex flex-col items-center justify-center w-full h-full p-5 lg:px-[20rem] gap-4">
@@ -37,7 +36,7 @@ export default function FormularioPage({ params }: FormularioPageProps) {
 					Edital:
 					<Button variant="link" asChild>
 						<Link
-							href={selecao.data.edital}
+							href={selecao.edital}
 							target="_blank"
 							rel="noopeener noreferrer"
 						>

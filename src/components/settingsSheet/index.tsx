@@ -14,7 +14,9 @@ import {
 } from "@/components/ui/sheet"
 import { toast } from "@/hooks/use-toast"
 import { deleteAuthorized, getAuthorized } from "@/http/api"
+import { fetchAuthorized } from "@/http/db"
 import { queryClient } from "@/lib/reactQueryProvider"
+import { createClient } from "@/utils/supabase/client"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import { PlusCircle, Settings2, Trash2 } from "lucide-react"
 import { getServerSession } from "next-auth"
@@ -23,19 +25,13 @@ import { AddForm } from "./addForm"
 
 export function SettingsSheet() {
 	const [isOpen, setIsOpen] = useState(false)
-	const { data } = useQuery({
-		queryKey: ["autorizados"],
-		queryFn: () => getAuthorized(),
-	})
-	const { mutateAsync: deleteAuthorizedEmails } = useMutation({
-		mutationFn: deleteAuthorized,
-		mutationKey: ["autorizados"],
-		onSuccess: (_, variables) => {
-			queryClient.invalidateQueries({
-				queryKey: ["autorizados"],
-			})
+	const authorized = [
+		{
+			id: "1",
+			email: "email@email.com",
+			role: "admin",
 		},
-	})
+	]
 
 	function handleClick() {
 		if (isOpen) {
@@ -45,22 +41,7 @@ export function SettingsSheet() {
 		}
 	}
 
-	async function handleDelete(value: string) {
-		try {
-			await deleteAuthorizedEmails(value)
-		} catch (error) {
-			toast({
-				title: "Erro ao remover autorizado",
-				description: "O email não pode ser removido da lista de autorizados.",
-				variant: "destructive",
-			})
-		}
-		toast({
-			title: "Autorizado removido com sucesso",
-			description: `O email ${value} foi removido da lista de autorizados.`,
-			variant: "destructive",
-		})
-	}
+	async function handleDelete(value: string) {}
 	return (
 		<Sheet>
 			<SheetTrigger asChild>
@@ -82,7 +63,7 @@ export function SettingsSheet() {
 							<CardTitle>Emails cadastrados</CardTitle>
 						</CardHeader>
 						<CardContent className="flex flex-col gap-4">
-							{data?.map((autorizado) => (
+							{authorized?.map((autorizado) => (
 								<div
 									key={autorizado.email}
 									className="flex flex-row justify-between items-center"

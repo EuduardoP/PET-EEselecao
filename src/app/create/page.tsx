@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { type AuthorizedUser, getAuthorized, getSelecao } from "@/http/api"
+import { type AuthorizedUser, fetchAuthorized, fetchSelecao } from "@/http/db"
 import { getServerSession } from "next-auth"
 import Image from "next/image"
 import Link from "next/link"
@@ -9,8 +9,8 @@ import ToastHandler from "./toastHandler"
 
 export default async function Create() {
 	const session = await getServerSession()
-	const authorized = await getAuthorized()
-	const selecao = await getSelecao()
+	const { data: authorized } = await fetchAuthorized()
+	const { data: selecao } = await fetchSelecao()
 
 	let isAuthorized = false
 	let showToast = false
@@ -18,7 +18,7 @@ export default async function Create() {
 		redirect("/login")
 	}
 
-	if (session.user?.email) {
+	if (session.user?.email && authorized) {
 		const userAuthorized = authorized.some(
 			(user: AuthorizedUser) => user.email === session.user?.email,
 		)
@@ -43,11 +43,11 @@ export default async function Create() {
 				</p>
 
 				<FormInput />
-				{selecao.data.semestre && (
+				{selecao?.[0]?.semestre && (
 					<>
 						<p>Já existe uma seleção criada</p>
 						<Button asChild>
-							<Link href={`/${selecao.data.semestre}/participantes`}>
+							<Link href={`/${selecao[0].semestre}/participantes`}>
 								Ir para a seleção
 							</Link>
 						</Button>

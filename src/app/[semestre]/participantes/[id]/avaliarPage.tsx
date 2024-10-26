@@ -8,9 +8,11 @@ import {
 } from "@/components/ui/pagination"
 import AvaliarForms from "./avaliarForms"
 
-export default function AvaliarPage({
-	page,
-}: { params: { id: string }; page: string }) {
+interface AvaliarPageProps {
+	page: string
+}
+
+export default function AvaliarPage({ page }: AvaliarPageProps) {
 	const currentPage = Number(page) < 1 ? "1" : page
 
 	return (

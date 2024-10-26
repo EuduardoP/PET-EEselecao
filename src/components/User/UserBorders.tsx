@@ -1,6 +1,11 @@
 "use client"
 
+import { toast } from "@/hooks/use-toast"
 import { changeStatus, deleteUser } from "@/http/api"
+import { type SelecaoData, updateParticipanteStatus } from "@/http/db"
+import { queryClient } from "@/lib/reactQueryProvider"
+import { createSupabaseBrowser } from "@/utils/supabase/client"
+import { useMutation } from "@tanstack/react-query"
 import {
 	Check,
 	CircleCheck,
@@ -27,14 +32,7 @@ interface UserBordersProps {
 	authorized?: boolean
 	onSubscriberClick?: (subscriberEmail: string) => void
 	disableChangeStatus?: boolean
-	selecao?: {
-		semestre: string
-		dateRange: {
-			from: string
-			to: string
-		}
-		edital: string
-	}
+	selecao?: SelecaoData
 }
 
 export function UserBorders({
@@ -47,6 +45,76 @@ export function UserBorders({
 	selecao,
 }: UserBordersProps) {
 	const router = useRouter()
+
+	const { mutateAsync: changeStatusFn } = useMutation({
+		mutationFn: async (params: { id: string; newStatus: string }) => {
+			const supabase = createSupabaseBrowser()
+			const { error, status, statusText } = await supabase
+				.from("participantes")
+				.update({ status: params.newStatus })
+				.eq("id", params.id)
+
+			if (error) throw new Error(error.message)
+			return { status, statusText }
+		},
+		onSuccess: (_, variables) => {
+			queryClient.setQueryData<SubscriberData[]>(["users"], (oldData) => {
+				return oldData?.map((item) =>
+					item.id === variables.id
+						? { ...item, status: variables.newStatus }
+						: item,
+				)
+			})
+		},
+	})
+
+	async function handleChangeStatus(subscriberId: string, newStatus: string) {
+		try {
+			await changeStatusFn({ id: subscriberId, newStatus })
+			toast({
+				title: "Status atualizado",
+				description: "Status atualizado com sucesso.",
+			})
+		} catch {
+			toast({
+				title: "Erro ao atualizar status",
+				description: "Tente novamente mais tarde.",
+				variant: "destructive",
+			})
+		}
+	}
+
+	const { mutateAsync: deleteUserFn } = useMutation({
+		mutationFn: async (params: { id: string }) => {
+			const supabase = createSupabaseBrowser()
+			const { error, status, statusText } = await supabase
+				.from("participantes")
+				.delete()
+				.eq("id", params.id)
+		},
+		onSuccess: (_, variables) => {
+			queryClient.setQueryData<SubscriberData[]>(["users"], (oldData) => {
+				return oldData?.filter((item) => item.id !== variables.id)
+			})
+		},
+	})
+
+	function handleDeleteUser(subscriberId: string) {
+		try {
+			deleteUserFn({ id: subscriberId })
+			toast({
+				title: "Usuário deletado",
+				description: "Usuário deletado com sucesso.",
+			})
+		} catch {
+			toast({
+				title: "Erro ao deletar usuário",
+				description: "Tente novamente mais tarde.",
+				variant: "destructive",
+			})
+		}
+	}
+
 	if (!subscriber)
 		return (
 			<Card className="w-full md:w-auto">
@@ -87,21 +155,27 @@ export function UserBorders({
 				{authorized ? (
 					<>
 						<ContextMenuItem
-							onClick={() => changeStatus("Aprovado", subscriber.id)}
+							onClick={() => {
+								handleChangeStatus(subscriber.id, "Aprovado")
+							}}
 							className="gap-2"
 						>
 							<CircleCheck size={20} />
 							Aprovado
 						</ContextMenuItem>
 						<ContextMenuItem
-							onClick={() => changeStatus("Pendente", subscriber.id)}
+							onClick={() => {
+								handleChangeStatus(subscriber.id, "Pendente")
+							}}
 							className="gap-2"
 						>
 							<Hourglass size={20} />
 							Pendente
 						</ContextMenuItem>
 						<ContextMenuItem
-							onClick={() => changeStatus("Reprovado", subscriber.id)}
+							onClick={() => {
+								handleChangeStatus(subscriber.id, "Reprovado")
+							}}
 							className="gap-2"
 						>
 							<CircleX size={20} />
@@ -109,7 +183,7 @@ export function UserBorders({
 						</ContextMenuItem>
 						<ContextMenuSeparator />
 						<ContextMenuItem
-							onClick={() => deleteUser(subscriber.id)}
+							onClick={() => handleDeleteUser(subscriber.id)}
 							className="gap-2"
 						>
 							<Trash2 size={20} />
