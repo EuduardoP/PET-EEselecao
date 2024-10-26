@@ -7,7 +7,6 @@ import {
 	FormControl,
 	FormField,
 	FormItem,
-	FormLabel,
 	FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
@@ -26,13 +25,11 @@ import {
 	SelectValue,
 } from "@/components/ui/select"
 import { toast } from "@/hooks/use-toast"
-import { createSelecao } from "@/http/api"
 import { cn } from "@/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { addDays, format } from "date-fns"
+import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { CalendarIcon } from "lucide-react"
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 import type { DateRange } from "react-day-picker"
 import { useForm } from "react-hook-form"
@@ -54,14 +51,14 @@ export const createFormSchema = z.object({
 export default function FormInput() {
 	const [date, setDate] = useState<DateRange | undefined>()
 	const [editalOpen, setEditalOpen] = useState<boolean>(false)
-	const router = useRouter()
+	//const router = useRouter()
 	const form = useForm<z.infer<typeof createFormSchema>>({
 		resolver: zodResolver(createFormSchema),
 	})
 
 	function onSubmit(data: z.infer<typeof createFormSchema>) {
-		const yearValue = format(data.dateRange.from, "yyyy")
-		const semestre = data.semestre
+		//const yearValue = format(data.dateRange.from, "yyyy")
+		//const semestre = data.semestre
 
 		toast({
 			title: "Seleção criada com sucesso!",

@@ -34,7 +34,9 @@ export function SettingsSheet() {
 		}
 	}
 
-	async function handleDelete(value: string) {}
+	async function handleDelete(value: string) {
+		console.log(value)
+	}
 	return (
 		<Sheet>
 			<SheetTrigger asChild>

@@ -1,7 +1,6 @@
 "use client"
 
 import { toast } from "@/hooks/use-toast"
-import type { SelecaoData } from "@/http/db"
 import { queryClient } from "@/lib/reactQueryProvider"
 import { createSupabaseBrowser } from "@/utils/supabase/client"
 import { useMutation } from "@tanstack/react-query"
@@ -31,7 +30,6 @@ interface UserBordersProps {
 	authorized?: boolean
 	onSubscriberClick?: (subscriberEmail: string) => void
 	disableChangeStatus?: boolean
-	selecao?: SelecaoData
 }
 
 export function UserBorders({
@@ -41,7 +39,6 @@ export function UserBorders({
 	disableChangeStatus,
 	colorBorders,
 	authorized,
-	selecao,
 }: UserBordersProps) {
 	const router = useRouter()
 

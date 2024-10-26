@@ -77,7 +77,7 @@ export async function deleteUser(id: string) {
 				queryKey: ["inscritos"],
 			})
 		}
-	} catch (error) {
+	} catch {
 		toast({
 			title: "Erro ao deletar usuário",
 			description: "Tente novamente mais tarde",
@@ -107,7 +107,7 @@ export async function createSelecao(data: z.infer<typeof createFormSchema>) {
 				data: formattedData,
 			}),
 		})
-	} catch (error) {
+	} catch {
 		toast({
 			title: "Erro ao criar seleção",
 			description: "Tente novamente mais tarde",
@@ -163,7 +163,7 @@ export async function createFormulario(
 		})
 
 		return { error: false, id }
-	} catch (error) {
+	} catch {
 		toast({
 			title: "Erro ao criar formulário",
 			description:
@@ -201,7 +201,7 @@ export async function updateFormulario(
 		})
 
 		return { error: false }
-	} catch (error) {
+	} catch {
 		toast({
 			title: "Erro ao criar formulário",
 			description:
@@ -227,7 +227,7 @@ export async function addAuthorized(data: { email: string; role: string }) {
 		}
 
 		return { error: false }
-	} catch (error) {
+	} catch {
 		toast({
 			title: "Erro ao adicionar autorizado",
 			description:

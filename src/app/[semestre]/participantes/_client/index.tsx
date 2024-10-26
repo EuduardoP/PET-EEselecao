@@ -35,7 +35,6 @@ interface ClientComponentProps {
 export function ClientComponent({
 	params,
 	authorized,
-	selecao,
 	session,
 }: ClientComponentProps) {
 	const router = useRouter()
@@ -157,7 +156,6 @@ export function ClientComponent({
 												subscriber={subscriber}
 												colorBorders
 												authorized={isAuthorized()}
-												selecao={selecao?.[0]}
 												onSubscriberClick={
 													subscriber.status === "Pendente"
 														? handleSubscriberClick
