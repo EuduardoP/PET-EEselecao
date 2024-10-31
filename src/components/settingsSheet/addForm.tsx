@@ -11,8 +11,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select"
 import { toast } from "@/hooks/use-toast"
-import { addAuthorized } from "@/http/api"
 import { queryClient } from "@/lib/reactQueryProvider"
+import { createSupabaseBrowser } from "@/utils/supabase/client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
 import { PlusCircle } from "lucide-react"
@@ -23,7 +23,7 @@ import { Form, FormField } from "../ui/form"
 
 export const authorizedformSchema = z.object({
 	email: z.string().email(),
-	role: z.string().min(1),
+	role: z.enum(["avaliador", "admin"]),
 })
 
 interface AddFormProps {
@@ -36,16 +36,31 @@ export function AddForm({ handleClose }: AddFormProps) {
 	})
 
 	const { mutateAsync: addAuthorizedEmails } = useMutation({
-		mutationFn: addAuthorized,
+		mutationFn: async (params: { email: string; role: string }) => {
+			const supabase = createSupabaseBrowser()
+			const { data } = await supabase.from("autorizados").insert({
+				email: params.email,
+				role: params.role,
+			})
+			return data
+		},
 		mutationKey: ["autorizados"],
 		onSuccess: (_, variables) => {
-			queryClient.setQueryData<unknown[]>(["autorizados"], (oldData = []) => {
-				return [...oldData, variables]
-			})
+			queryClient.setQueryData<z.infer<typeof authorizedformSchema>>(
+				["autorizados"],
+				(prevData) => {
+					if (!prevData) return prevData
+					return {
+						...prevData,
+						email: variables.email,
+						role: variables.role as "avaliador" | "admin",
+					}
+				},
+			)
 			handleClose()
 			toast({
 				title: "Autorizado adicionado com sucesso",
-				description: `O email ${variables.email} foi adicionado à lista de autorizados como ${variables.role}.`,
+				description: `O email ${form.getValues("email")} foi adicionado à lista de autorizados como ${form.getValues("role")}.`,
 			})
 		},
 		onError: () => {
@@ -67,7 +82,6 @@ export function AddForm({ handleClose }: AddFormProps) {
 			console.error("Erro ao adicionar autorizado:", error)
 		}
 	}
-
 	return (
 		<Form {...form}>
 			<form

@@ -37,17 +37,6 @@ export default async function Home() {
 						As inscrições estão encerradas
 					</div>
 				)}
-				{!selecao ? (
-					<div className="flex w-96 h-14 items-center gap-2 bg-transparent p-2 rounded-xl border border-zinc-800 focus-within:ring-1 ring-blue-500 ring-offset-2 ring-offset-zinc-950 justify-center">
-						Não há seleção neste momento
-					</div>
-				) : isOpen ? (
-					<FormInput />
-				) : (
-					<div className="flex w-96 h-14 items-center gap-2 bg-transparent p-2 rounded-xl border border-zinc-800 focus-within:ring-1 ring-blue-500 ring-offset-2 ring-offset-zinc-950 justify-center">
-						As inscrições estão encerradas
-					</div>
-				)}
 
 				<ClientComponent error={error} selecao={selecao} />
 			</main>

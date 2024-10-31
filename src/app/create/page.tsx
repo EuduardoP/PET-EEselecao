@@ -15,7 +15,7 @@ export default async function Create() {
 	let isAuthorized = false
 	let showToast = false
 	if (!session) {
-		redirect("/login")
+		redirect("/")
 	}
 
 	if (session.user?.email && authorized) {
@@ -31,7 +31,7 @@ export default async function Create() {
 			isAuthorized = true
 		}
 	} else {
-		redirect("/login")
+		redirect("/")
 	}
 
 	return (
