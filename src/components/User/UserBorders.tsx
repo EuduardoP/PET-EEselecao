@@ -1,8 +1,8 @@
 "use client"
 
 import { toast } from "@/hooks/use-toast"
+import { type ResponseData, changeStatus, deleteUser } from "@/http/api"
 import { queryClient } from "@/lib/reactQueryProvider"
-import { createSupabaseBrowser } from "@/utils/supabase/client"
 import { useMutation } from "@tanstack/react-query"
 import {
 	Check,
@@ -44,23 +44,27 @@ export function UserBorders({
 
 	const { mutateAsync: changeStatusFn } = useMutation({
 		mutationFn: async (params: { id: string; newStatus: string }) => {
-			const supabase = createSupabaseBrowser()
-			const { error, status, statusText } = await supabase
-				.from("participantes")
-				.update({ status: params.newStatus })
-				.eq("id", params.id)
-
-			if (error) throw new Error(error.message)
-			return { status, statusText }
+			const { status, statusText, error } = await changeStatus(
+				params.newStatus,
+				params.id,
+			)
+			return { status, statusText, error }
 		},
 		onSuccess: (_, variables) => {
-			queryClient.setQueryData<SubscriberData[]>(["users"], (oldData) => {
-				return oldData?.map((item) =>
-					item.id === variables.id
-						? { ...item, status: variables.newStatus }
-						: item,
-				)
-			})
+			queryClient.setQueryData<ResponseData<SubscriberData>>(
+				["inscritos"],
+				(old) => {
+					if (!old) return old
+					return {
+						...old,
+						data: old.data.map((item) =>
+							item.id === variables.id
+								? { ...item, status: variables.newStatus }
+								: item,
+						),
+					}
+				},
+			)
 		},
 	})
 
@@ -82,13 +86,20 @@ export function UserBorders({
 
 	const { mutateAsync: deleteUserFn } = useMutation({
 		mutationFn: async (params: { id: string }) => {
-			const supabase = createSupabaseBrowser()
-			await supabase.from("participantes").delete().eq("id", params.id)
+			const { status, statusText, error } = await deleteUser(params.id)
+			return { status, statusText, error }
 		},
 		onSuccess: (_, variables) => {
-			queryClient.setQueryData<SubscriberData[]>(["users"], (oldData) => {
-				return oldData?.filter((item) => item.id !== variables.id)
-			})
+			queryClient.setQueryData<ResponseData<SubscriberData>>(
+				["inscritos"],
+				(old) => {
+					if (!old) return old
+					return {
+						...old,
+						data: old.data.filter((item) => item.id !== variables.id),
+					}
+				},
+			)
 		},
 	})
 

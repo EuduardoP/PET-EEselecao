@@ -11,10 +11,11 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/hooks/use-toast"
-import type { SelecaoData } from "@/http/db"
-import { createSupabaseBrowser } from "@/utils/supabase/client"
+import { createMember, getSelecao } from "@/http/api"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { LoaderCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import z from "zod"
 import type { SubscriberData } from "../User/UserRoot"
@@ -27,8 +28,6 @@ import {
 	FormMessage,
 } from "../ui/form"
 
-const supabase = createSupabaseBrowser()
-
 export const iniciarFormSchema = z.object({
 	name: z.string().min(3, { message: "O nome deve ter pelo menos 3 letras" }),
 	email: z
@@ -36,14 +35,15 @@ export const iniciarFormSchema = z.object({
 			required_error: "O email é obrigatório",
 		})
 		.email({ message: "Digite um email válido" }),
-	matricula: z.coerce
-		.number({
+	matricula: z
+		.string({
 			required_error: "A matrícula é obrigatória",
 		})
 		.min(9),
 })
 
-export function FormInput() {
+export function FormInput({ members }: { members: SubscriberData[] }) {
+	const [isLoading, setLoading] = useState(false)
 	const router = useRouter()
 	const form = useForm<z.infer<typeof iniciarFormSchema>>({
 		resolver: zodResolver(iniciarFormSchema),
@@ -51,13 +51,7 @@ export function FormInput() {
 
 	const checkEmailExists = async (email: string): Promise<boolean> => {
 		try {
-			const { data } = await supabase
-				.from("participantes")
-				.select<"participantes", SubscriberData>()
-
-			const emailFound =
-				Array.isArray(data) && data.some((inscrito) => inscrito.email === email)
-
+			const emailFound = members.some((inscrito) => inscrito.email === email)
 			return emailFound
 		} catch {
 			return false
@@ -65,6 +59,7 @@ export function FormInput() {
 	}
 
 	async function onSubmit(data: z.infer<typeof iniciarFormSchema>) {
+		setLoading(true)
 		const emailExists = await checkEmailExists(data.email)
 
 		if (emailExists) {
@@ -76,17 +71,7 @@ export function FormInput() {
 			return
 		}
 
-		const { data: newParticipante, error } = await supabase
-			.from("participantes")
-			.insert([
-				{
-					name: data.name,
-					email: data.email,
-					matricula: data.matricula,
-				},
-			])
-			.select()
-			.single()
+		const { uuid, error } = await createMember(data)
 
 		if (error) {
 			toast({
@@ -96,16 +81,15 @@ export function FormInput() {
 			})
 			return { error }
 		}
-		const { data: selecao } = await supabase
-			.from("selecao")
-			.select<"selecao", SelecaoData>()
-			.single()
+
+		const selecao = await getSelecao()
+
 		if (selecao && !error) {
 			toast({
 				title: "Cadastro realizado com sucesso!",
 				description: "Você será redirecionado para o formulário em instantes",
 			})
-			router.push(`${selecao.semestre}/formulario/${newParticipante.id}`)
+			router.push(`${selecao.data[0].semestre}/formulario/${uuid}`)
 		} else {
 			toast({
 				title: "Erro",
@@ -113,6 +97,7 @@ export function FormInput() {
 				variant: "destructive",
 			})
 		}
+		setLoading(false)
 	}
 	return (
 		<Form {...form}>
@@ -136,12 +121,19 @@ export function FormInput() {
 
 				<Dialog>
 					<DialogTrigger asChild>
-						<Button
-							type="button"
-							disabled={!form.watch("name") || form.watch("name").length < 3}
-						>
-							Quero participar
-						</Button>
+						{isLoading ? (
+							<Button disabled className="flex items-center gap-2">
+								<LoaderCircle className="animate-spin" />
+								Aguarde
+							</Button>
+						) : (
+							<Button
+								type="button"
+								disabled={!form.watch("name") || form.watch("name").length < 3}
+							>
+								Quero participar
+							</Button>
+						)}
 					</DialogTrigger>
 					<DialogContent>
 						<DialogHeader>

@@ -1,6 +1,8 @@
 "use client"
 
+import type { Selecao } from "@/app/api/selecao/route"
 import { User } from "@/components/User"
+import type { SubscriberData } from "@/components/User/UserRoot"
 import { SettingsSheet } from "@/components/settingsSheet/index"
 import {
 	Card,
@@ -19,8 +21,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { AuthorizedUser, SelecaoData } from "@/http/db"
-import { createSupabaseBrowser } from "@/utils/supabase/client"
+import { getMembers } from "@/http/api"
 import { useQuery } from "@tanstack/react-query"
 import type { Session } from "next-auth"
 import { useRouter } from "next/navigation"
@@ -28,15 +29,11 @@ import { useState } from "react"
 
 interface ClientComponentProps {
 	params: { semestre: string }
-	selecao: SelecaoData[] | null
-	authorized: AuthorizedUser[] | null
+	selecao: Selecao[] | null
+	authorized: boolean
 	session: Session | null
 }
-export function ClientComponent({
-	params,
-	authorized,
-	session,
-}: ClientComponentProps) {
+export function ClientComponent({ params, authorized }: ClientComponentProps) {
 	const router = useRouter()
 	const [filter, setFilter] = useState<string>("no-filter")
 	const {
@@ -44,26 +41,23 @@ export function ClientComponent({
 		isLoading,
 		isError,
 	} = useQuery({
-		queryKey: ["users"],
+		queryKey: ["inscritos"],
 		queryFn: async () => {
-			const supabase = createSupabaseBrowser()
-			const { data } = await supabase.from("participantes").select()
-			return data
+			return await getMembers()
 		},
 	})
-
-	const sortedData = () => {
-		if (!Array.isArray(users)) return []
+	const sortedData = (): SubscriberData[] => {
+		if (!Array.isArray(users?.data)) return []
 
 		switch (filter) {
 			case "name":
-				return [...users].sort((a, b) => a.name.localeCompare(b.name))
+				return [...users.data].sort((a, b) => a.name.localeCompare(b.name))
 			case "average":
-				return [...users].sort((a, b) => b.mediaFinal - a.mediaFinal)
+				return [...users.data].sort((a, b) => b.mediaFinal - a.mediaFinal)
 			case "no-filter":
-				return users
+				return users.data
 			default:
-				return users
+				return users.data
 		}
 	}
 
@@ -71,28 +65,6 @@ export function ClientComponent({
 		const currentPath = window.location.pathname
 		router.push(`${currentPath}/${subscriberId}?page=1`)
 	}
-
-	function isAuthorized() {
-		if (!session?.user?.email || !authorized) {
-			return false
-		}
-
-		const autorizadosData = authorized as {
-			email: string
-			role: string
-		}[]
-
-		if (!autorizadosData) {
-			return false
-		}
-
-		const autorizado = autorizadosData.find(
-			(authUser) => authUser.email === session.user?.email,
-		)
-
-		return autorizado?.role === "admin"
-	}
-	console.log(isAuthorized())
 
 	return (
 		<div className="flex flex-col min-h-screen mt-10 font-[family-name:var(--font-geist-sans)]">
@@ -105,7 +77,7 @@ export function ClientComponent({
 				<CardHeader>
 					<CardTitle className="flex justify-between items-center">
 						<span>Participantes</span>
-						{isAuthorized() && <SettingsSheet />}
+						{authorized && <SettingsSheet />}
 					</CardTitle>
 					<CardDescription className="w-full flex justify-between items-center">
 						<div className="flex flex-row gap-2 items-center">
@@ -123,7 +95,7 @@ export function ClientComponent({
 									</SelectGroup>
 								</SelectContent>
 							</Select>
-							{!isAuthorized() && (
+							{!authorized && (
 								<sub className="text-sm text-foreground-muted">
 									Clique nos participantes para avaliar
 								</sub>
@@ -155,7 +127,7 @@ export function ClientComponent({
 											<User.Borders
 												subscriber={subscriber}
 												colorBorders
-												authorized={isAuthorized()}
+												authorized={authorized}
 												onSubscriberClick={
 													subscriber.status === "Pendente"
 														? handleSubscriberClick

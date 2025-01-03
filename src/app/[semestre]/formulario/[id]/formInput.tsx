@@ -1,6 +1,5 @@
 "use client"
 
-import type { SubscriberData } from "@/components/User/UserRoot"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import {
@@ -12,9 +11,10 @@ import {
 	FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { toast } from "@/hooks/use-toast"
-import { createSupabaseBrowser } from "@/utils/supabase/client"
+import { getMembersById, updateFormulario } from "@/http/api"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
@@ -50,16 +50,10 @@ export const usuarioFormSchema = z.object({
 
 export function FormInput({ params }: { params: { id: string } }) {
 	const router = useRouter()
-	const { data: inscrito, isFetched } = useQuery<SubscriberData>({
-		queryKey: ["inscrito"],
+	const { data: inscrito, isFetched } = useQuery({
+		queryKey: ["inscrito", params.id],
 		queryFn: async () => {
-			const supabase = createSupabaseBrowser()
-			const { data } = await supabase
-				.from("participantes")
-				.select("*")
-				.eq("id", params.id)
-				.single()
-			return data
+			return await getMembersById(params.id)
 		},
 	})
 
@@ -69,44 +63,49 @@ export function FormInput({ params }: { params: { id: string } }) {
 	})
 
 	useEffect(() => {
-		if (isFetched && inscrito) {
+		if (isFetched && inscrito?.data[0]) {
 			form.reset({
-				email: inscrito.email,
-				name: inscrito.name,
-				matricula: inscrito.matricula.toString(),
-				semestre: inscrito.semestre,
-				identificacao: inscrito.identificacao,
-				conhecimentoPET: inscrito.conhecimentoPET,
-				interessePET: inscrito.interessePET,
-				competenciasDesejadas: inscrito.competenciasDesejadas,
-				atividadesExtracurriculares: inscrito.atividadesExtracurriculares,
-				atividadesInteresse: inscrito.atividadesInteresse,
-				cargaHoraria: inscrito.cargaHoraria,
+				email: inscrito.data[0].email ?? "",
+				name: inscrito.data[0].name ?? "",
+				matricula: inscrito.data[0].matricula.toString() ?? "",
+				semestre: inscrito.data[0].semestre ?? "",
+				identificacao: inscrito.data[0].identificacao ?? "",
+				conhecimentoPET: inscrito.data[0].conhecimentoPET ?? "",
+				interessePET: inscrito.data[0].interessePET ?? "",
+				competenciasDesejadas: inscrito.data[0].competenciasDesejadas ?? "",
+				atividadesExtracurriculares:
+					inscrito.data[0].atividadesExtracurriculares ?? "",
+				atividadesInteresse: inscrito.data[0].atividadesInteresse ?? "",
+				cargaHoraria: inscrito.data[0].cargaHoraria ?? "",
 			})
 		}
 	}, [isFetched, inscrito, form])
 
 	async function onSubmit(data: z.infer<typeof usuarioFormSchema>) {
 		try {
-			const supabase = createSupabaseBrowser()
-			await supabase
-				.from("participantes")
-				.update({ ...data, status: "Pendente" })
-				.eq("id", params.id)
-			toast({
-				title: "Formulário enviado com sucesso!",
-				description: "Você receberá um e-mail para informar de novas etapas",
-			})
+			const response = await updateFormulario(params.id, data)
+			if (response.error === null) {
+				toast({
+					title: "Formulário enviado com sucesso!",
+					description: "Você receberá um e-mail para informar de novas etapas",
+				})
 
-			router.push(`${params.id}/perfil`)
+				router.push(`${params.id}/perfil`)
+			} else {
+				toast({
+					variant: "destructive",
+					title: "Erro ao atualizar o seu usuário",
+					description: "Informe alguém do PET-EE",
+				})
+			}
 		} catch {
 			toast({
+				variant: "destructive",
 				title: "Erro ao atualizar o seu usuário",
 				description: "Informe alguém do PET-EE",
 			})
 		}
 	}
-
 	return (
 		<Form {...form}>
 			<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
@@ -200,7 +199,7 @@ export function FormInput({ params }: { params: { id: string } }) {
 									<ToggleGroup
 										type="single"
 										variant="outline"
-										className="flex flex-col gap-2 items-start"
+										className="flex flex-wrap gap-2 items-start"
 										value={field.value}
 										onValueChange={field.onChange}
 										size={"sm"}
@@ -256,7 +255,11 @@ export function FormInput({ params }: { params: { id: string } }) {
 							<FormItem>
 								<FormLabel>Como você conheceu o PET?*</FormLabel>
 								<FormControl>
-									<Input placeholder="Sua resposta" {...field} />
+									<Textarea
+										placeholder="Sua resposta"
+										className="resize-none"
+										{...field}
+									/>
 								</FormControl>
 								<FormMessage />
 							</FormItem>
@@ -275,7 +278,11 @@ export function FormInput({ params }: { params: { id: string } }) {
 									Elétrica?*
 								</FormLabel>
 								<FormControl>
-									<Input placeholder="Sua resposta" {...field} />
+									<Textarea
+										placeholder="Sua resposta"
+										className="resize-none"
+										{...field}
+									/>
 								</FormControl>
 								<FormMessage />
 							</FormItem>
@@ -294,7 +301,11 @@ export function FormInput({ params }: { params: { id: string } }) {
 									fazendo parte do PET?*
 								</FormLabel>
 								<FormControl>
-									<Input placeholder="Sua resposta" {...field} />
+									<Textarea
+										placeholder="Sua resposta"
+										className="resize-none"
+										{...field}
+									/>
 								</FormControl>
 								<FormMessage />
 							</FormItem>
@@ -312,7 +323,11 @@ export function FormInput({ params }: { params: { id: string } }) {
 									Quais atividades extracurriculares você já realizou/realiza?*
 								</FormLabel>
 								<FormControl>
-									<Input placeholder="Sua resposta" {...field} />
+									<Textarea
+										placeholder="Sua resposta"
+										className="resize-none"
+										{...field}
+									/>
 								</FormControl>
 								<FormMessage />
 							</FormItem>
@@ -331,7 +346,11 @@ export function FormInput({ params }: { params: { id: string } }) {
 									no PET?*
 								</FormLabel>
 								<FormControl>
-									<Input placeholder="Sua resposta" {...field} />
+									<Textarea
+										placeholder="Sua resposta"
+										className="resize-none"
+										{...field}
+									/>
 								</FormControl>
 								<FormMessage />
 							</FormItem>

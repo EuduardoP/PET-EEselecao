@@ -2,7 +2,7 @@ import { isSelecaoOpen } from "@/app/page"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { fetchSelecao } from "@/http/db"
+import { getSelecao } from "@/http/api"
 import Link from "next/link"
 import { FormInput } from "./formInput"
 
@@ -10,12 +10,18 @@ interface FormularioPageProps {
 	params: { semestre: string; id: string }
 }
 export default async function FormularioPage({ params }: FormularioPageProps) {
-	const { data: selecao } = await fetchSelecao()
-	if (selecao && isSelecaoOpen(selecao[0].date_from, selecao[0].date_to)) {
+	const selecao = await getSelecao()
+	//* Lembrar do ! na função isSelecaoOpen
+	if (selecao.data[0].data && isSelecaoOpen(selecao.data[0].data)) {
 		return (
 			<main className="flex flex-col items-center justify-center w-full h-full p-5 lg:px-[20rem] gap-4">
 				<Card className="flex flex-col gap-4 p-4 w-full container text-center">
 					Seleção encerrada, você não pode mais editar seu formulário.
+					<Button asChild>
+						<Link href={`/${params.semestre}/formulario/${params.id}/perfil`}>
+							Voltar para o seu perfil
+						</Link>
+					</Button>
 				</Card>
 			</main>
 		)
@@ -44,7 +50,7 @@ export default async function FormularioPage({ params }: FormularioPageProps) {
 					Edital:
 					<Button variant="link" asChild>
 						<Link
-							href={selecao?.[0]?.edital || "#"}
+							href={selecao.data[0].edital || "#"}
 							target="_blank"
 							rel="noopeener noreferrer"
 						>

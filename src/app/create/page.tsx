@@ -1,16 +1,34 @@
 import { Button } from "@/components/ui/button"
-import { type AuthorizedUser, fetchAuthorized, fetchSelecao } from "@/http/db"
 import { getServerSession } from "next-auth"
 import Image from "next/image"
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import type { AuthorizedUser } from "../api/authorized/route"
+import type { Selecao } from "../api/selecao/route"
 import FormInput from "./formInput"
 import ToastHandler from "./toastHandler"
 
 export default async function Create() {
 	const session = await getServerSession()
-	const { data: authorized } = await fetchAuthorized()
-	const { data: selecao } = await fetchSelecao()
+	const authorized: { data: AuthorizedUser[]; error: string | null } =
+		await fetch(`${process.env.URL}/api/authorized`, {
+			method: "GET",
+			headers: {
+				Authorization: `Bearer ${process.env.AUTHORIZED_KEY}`,
+				accept: "application/json",
+			},
+		}).then((res) => res.json())
+
+	const selecao: { data: Selecao[]; error: string | null } = await fetch(
+		`${process.env.URL}/api/selecao`,
+		{
+			method: "GET",
+			headers: {
+				Authorization: `Bearer ${process.env.AUTHORIZED_KEY}`,
+				accept: "application/json",
+			},
+		},
+	).then((res) => res.json())
 
 	let isAuthorized = false
 	let showToast = false
@@ -19,7 +37,7 @@ export default async function Create() {
 	}
 
 	if (session.user?.email && authorized) {
-		const userAuthorized = authorized.some(
+		const userAuthorized = authorized.data.some(
 			(user: AuthorizedUser) => user.email === session.user?.email,
 		)
 		if (!userAuthorized) {
@@ -33,7 +51,6 @@ export default async function Create() {
 	} else {
 		redirect("/")
 	}
-
 	return (
 		<div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-pattern bg-no-repeat bg-center">
 			<main className="flex flex-col gap-8 row-start-2 -mt-52 items-center justify-center">
@@ -43,11 +60,11 @@ export default async function Create() {
 				</p>
 
 				<FormInput />
-				{selecao?.[0]?.semestre && (
+				{selecao.data.length > 0 && (
 					<>
 						<p>Já existe uma seleção criada</p>
 						<Button asChild>
-							<Link href={`/${selecao[0].semestre}/participantes`}>
+							<Link href={`/${selecao.data[0].semestre}/participantes`}>
 								Ir para a seleção
 							</Link>
 						</Button>

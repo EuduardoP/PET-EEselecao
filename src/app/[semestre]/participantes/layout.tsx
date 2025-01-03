@@ -1,4 +1,5 @@
-import { type AuthorizedUser, fetchAuthorized } from "@/http/db"
+import type { AuthorizedUser } from "@/app/api/authorized/route"
+import { getAuthorized } from "@/http/api"
 import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import type { ReactNode } from "react"
@@ -9,14 +10,12 @@ export default async function ParticipantesLayout({
 	children: ReactNode
 }) {
 	const session = await getServerSession()
-	const { data: authorized } = await fetchAuthorized()
-
+	const authorized = await getAuthorized()
 	if (!session) {
 		redirect("/login")
 	}
-
 	if (session.user?.email && authorized) {
-		const userAuthorized = authorized.some(
+		const userAuthorized = authorized.data.some(
 			(user: AuthorizedUser) => user.email === session.user?.email,
 		)
 

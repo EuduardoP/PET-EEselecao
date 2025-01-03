@@ -11,11 +11,11 @@ import {
 	SelectValue,
 } from "@/components/ui/select"
 import { toast } from "@/hooks/use-toast"
+import { type ResponseData, addAuthorized } from "@/http/api"
 import { queryClient } from "@/lib/reactQueryProvider"
-import { createSupabaseBrowser } from "@/utils/supabase/client"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
-import { PlusCircle } from "lucide-react"
+import { Loader2, PlusCircle } from "lucide-react"
 import { useForm } from "react-hook-form"
 import z from "zod"
 import { Button } from "../ui/button"
@@ -23,7 +23,7 @@ import { Form, FormField } from "../ui/form"
 
 export const authorizedformSchema = z.object({
 	email: z.string().email(),
-	role: z.enum(["avaliador", "admin"]),
+	role: z.enum(["Avaliador", "Admin"]),
 })
 
 interface AddFormProps {
@@ -35,28 +35,27 @@ export function AddForm({ handleClose }: AddFormProps) {
 		resolver: zodResolver(authorizedformSchema),
 	})
 
-	const { mutateAsync: addAuthorizedEmails } = useMutation({
+	const { mutateAsync: addAuthorizedEmails, isPending } = useMutation({
 		mutationFn: async (params: { email: string; role: string }) => {
-			const supabase = createSupabaseBrowser()
-			const { data } = await supabase.from("autorizados").insert({
-				email: params.email,
-				role: params.role,
-			})
-			return data
+			return await addAuthorized({ email: params.email, role: params.role })
 		},
-		mutationKey: ["autorizados"],
 		onSuccess: (_, variables) => {
-			queryClient.setQueryData<z.infer<typeof authorizedformSchema>>(
-				["autorizados"],
-				(prevData) => {
-					if (!prevData) return prevData
-					return {
-						...prevData,
-						email: variables.email,
-						role: variables.role as "avaliador" | "admin",
-					}
-				},
-			)
+			queryClient.setQueryData<
+				ResponseData<z.infer<typeof authorizedformSchema>>
+			>(["autorizados"], (prev) => {
+				if (!prev?.data) return prev
+				return {
+					...prev,
+					data: [
+						...prev.data,
+						{
+							email: variables.email,
+							role: variables.role as "Avaliador" | "Admin",
+						},
+					],
+					error: null,
+				}
+			})
 			handleClose()
 			toast({
 				title: "Autorizado adicionado com sucesso",
@@ -106,20 +105,30 @@ export function AddForm({ handleClose }: AddFormProps) {
 							<SelectContent>
 								<SelectGroup>
 									<SelectLabel>Cargo</SelectLabel>
-									<SelectItem value="admin">Admin</SelectItem>
-									<SelectItem value="avaliador">Avaliador</SelectItem>
+									<SelectItem value="Admin">Admin</SelectItem>
+									<SelectItem value="Avaliador">Avaliador</SelectItem>
 								</SelectGroup>
 							</SelectContent>
 						</Select>
 					)}
 				/>
-				<Button
-					className="flex flex-row gap-2 w-full bg-emerald-400 hover:bg-emerald-500"
-					type="submit"
-				>
-					<PlusCircle size={18} />
-					Adicionar email
-				</Button>
+				{isPending ? (
+					<Button
+						className="flex flex-row gap-2 w-full bg-emerald-400 hover:bg-emerald-500"
+						disabled
+					>
+						<Loader2 className="animate-spin" size={18} />
+						Adicionando email
+					</Button>
+				) : (
+					<Button
+						className="flex flex-row gap-2 w-full bg-emerald-400 hover:bg-emerald-500"
+						type="submit"
+					>
+						<PlusCircle size={18} />
+						Adicionar email
+					</Button>
+				)}
 			</form>
 		</Form>
 	)

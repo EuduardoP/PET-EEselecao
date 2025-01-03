@@ -1,289 +1,229 @@
-const URL_API = process.env.SUPABASE_URL
-const API_KEY = process.env.SUPABASE_ANON_KEY
+"use server"
 
 import type { usuarioFormSchema } from "@/app/[semestre]/formulario/[id]/formInput"
+import type { AuthorizedUser } from "@/app/api/authorized/route"
+import type { Selecao } from "@/app/api/selecao/route"
 import type { createFormSchema } from "@/app/create/formInput"
 import type { iniciarFormSchema } from "@/components/HomeComponent/formInput"
 import type { SubscriberData } from "@/components/User/UserRoot"
-import { toast } from "@/hooks/use-toast"
-import { queryClient } from "@/lib/reactQueryProvider"
 import { format } from "date-fns"
 import type { z } from "zod"
 
-export interface SelecaoData {
-	semestre: string
-	date_from: string
-	date_to: string
-	edital: string
+export interface ResponseData<T> {
+	data: T[]
+	error: string | null
 }
 
-export async function getInscritos(id?: string): Promise<SubscriberData[]> {
-	const url = id
-		? `${URL_API}/participantes?id=eq.${id}`
-		: `${URL_API}/participantes`
-	const response = await fetch(url, {
+export async function getMembers(): Promise<ResponseData<SubscriberData>> {
+	try {
+		const url = `${process.env.URL}/api/members`
+		const response = await fetch(url, {
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${process.env.AUTHORIZED_KEY}`,
+				cache: "no-store",
+			},
+		}).then((req) => req.json())
+
+		return { data: response.data, error: response.error }
+	} catch {
+		return { data: [], error: "Erro ao deletar inscrito" }
+	}
+}
+
+export async function getMembersById(
+	id: string,
+): Promise<ResponseData<SubscriberData>> {
+	try {
+		const url = `${process.env.URL}/api/members/${id}`
+		const response = await fetch(url, {
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${process.env.AUTHORIZED_KEY}`,
+				cache: "no-store",
+			},
+		}).then((req) => req.json())
+
+		return { data: response.data, error: response.error }
+	} catch {
+		return { data: [], error: "Erro ao deletar inscrito" }
+	}
+}
+
+export async function changeStatus(newStatus: string, id: string) {
+	const response = await fetch(`${process.env.URL}/api/members/${id}`, {
+		method: "PATCH",
 		headers: {
 			"Content-Type": "application/json",
-			apikey: `${API_KEY}`,
+			Authorization: `Bearer ${process.env.AUTHORIZED_KEY}`,
 		},
+		body: JSON.stringify({ newStatus }),
+		cache: "no-store",
 	})
 
+	// Verifica se a resposta foi bem-sucedida
 	if (!response.ok) {
-		throw new Error("Erro ao buscar inscritos")
+		const errorData = await response.json()
+		console.error(
+			`Erro ao alterar status: ${response.status} ${response.statusText}`,
+			errorData,
+		)
+		return {
+			status: response.status,
+			statusText: response.statusText,
+			error: errorData.error,
+		}
 	}
 
 	const data = await response.json()
-	return id ? [data] : data
+
+	return { status: response.status, statusText: response.statusText, data }
 }
 
-export async function changeStatus(status: string, id: string) {
-	try {
-		const response = await fetch(`${URL_API}/participantes?id=eq.${id}`, {
-			method: "PATCH",
-			headers: {
-				"Content-Type": "application/json",
-				apikey: `${API_KEY}`,
-			},
-			body: JSON.stringify({
-				status: `${status}`,
-			}),
-		})
-
-		if (response.status === 200) {
-			await queryClient.invalidateQueries({
-				queryKey: ["inscritos"],
-			})
-		}
-	} catch {
-		toast({
-			title: "Erro ao atualizar status",
-			description: "Tente novamente mais tarde",
-			variant: "destructive",
-		})
-	}
-}
 export async function deleteUser(id: string) {
-	try {
-		const response = await fetch(`${URL_API}/participantes?id=eq.${id}`, {
-			method: "DELETE",
-			headers: {
-				"Content-Type": "application/json",
-				apikey: `${API_KEY}`,
-			},
-		})
+	const response = await fetch(`${process.env.URL}/api/members/${id}`, {
+		method: "DELETE",
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: `Bearer ${process.env.AUTHORIZED_KEY}`,
+			cache: "no-store",
+		},
+	})
 
-		if (response.status === 200) {
-			await queryClient.invalidateQueries({
-				queryKey: ["inscritos"],
-			})
+	if (!response.ok) {
+		const errorData = await response.json()
+		console.error(
+			`Erro ao deletar participante: ${response.status} ${response.statusText}`,
+			errorData,
+		)
+		return {
+			status: response.status,
+			statusText: response.statusText,
+			error: errorData.error,
 		}
-	} catch {
-		toast({
-			title: "Erro ao deletar usuário",
-			description: "Tente novamente mais tarde",
-			variant: "destructive",
-		})
 	}
+
+	const data = await response.json()
+
+	return { status: response.status, statusText: response.statusText, data }
 }
 
 export async function createSelecao(data: z.infer<typeof createFormSchema>) {
-	try {
-		const formattedData = {
-			...data,
-			dateRange: {
-				from: format(new Date(data.dateRange.from), "yyyy-MM-dd"),
-				to: format(new Date(data.dateRange.to), "yyyy-MM-dd"),
-			},
-			semestre: `${data.semestre}${new Date(data.dateRange.from).getFullYear()}`,
-		}
-
-		await fetch(`${URL_API}/selecao`, {
-			method: "PUT",
-			headers: {
-				"Content-Type": "application/json",
-				apikey: `${API_KEY}`,
-			},
-			body: JSON.stringify({
-				data: formattedData,
-			}),
-		})
-	} catch {
-		toast({
-			title: "Erro ao criar seleção",
-			description: "Tente novamente mais tarde",
-			variant: "destructive",
-		})
-	}
-}
-
-export async function getSelecao(): Promise<SelecaoData> {
-	const response = await fetch(`${URL_API}/selecao`, {
-		headers: {
-			"Content-Type": "application/json",
-			apikey: `${API_KEY}`,
+	const formattedData = {
+		semestre: `${data.semestre}${format(data.data.from, "yyyy")}`,
+		data: {
+			start: format(data.data.from, "yyyy-MM-dd"),
+			end: format(data.data.to, "yyyy-MM-dd"),
 		},
+		edital: data.edital,
+	}
+
+	const response = await fetch(`${process.env.URL}/api/selecao`, {
+		method: "POST",
+		headers: {
+			Authorization: `Bearer ${process.env.AUTHORIZED_KEY}`,
+			accept: "application/json",
+			cache: "no-store",
+		},
+		body: JSON.stringify(formattedData),
 	})
-	if (!response.ok) {
-		throw new Error("Network response was not ok")
-	}
-	const data: SelecaoData = await response.json()
-	if (!data) {
-		throw new Error("No data found")
-	}
-	return data
+
+	return { status: response.status, ok: response.ok }
 }
 
-export async function createFormulario(
-	values: z.infer<typeof iniciarFormSchema>,
-): Promise<{ error: boolean; id?: string }> {
-	try {
-		const response = await fetch(`${URL_API}/participantes`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				apikey: `${API_KEY}`,
-			},
-			body: JSON.stringify({ ...values, status: "Pendente" }),
-		})
-
-		if (!response.ok) {
-			toast({
-				title: "Erro ao criar formulário",
-				description: "Esse email já foi cadastrado",
-			})
-			return { error: true }
-		}
-
-		const data = await response.json()
-		const id = data.id
-
-		toast({
-			title: "Formulário criado com sucesso",
-			description: "Você será redirecionado para a página do formulário",
-		})
-
-		return { error: false, id }
-	} catch {
-		toast({
-			title: "Erro ao criar formulário",
-			description:
-				"Houve um erro ao tentar criar o formulário. Tente novamente.",
-		})
-		return { error: true }
+export async function getSelecao(): Promise<ResponseData<Selecao>> {
+	const response = await fetch(`${process.env.URL}/api/selecao`, {
+		headers: {
+			Authorization: `Bearer ${process.env.AUTHORIZED_KEY}`,
+			accept: "application/json",
+			cache: "no-store",
+		},
+	}).then((req) => req.json())
+	if (!response) {
+		return { data: [], error: response.error }
 	}
+	return { data: response.data, error: response.error }
+}
+
+export async function createMember(
+	data: z.infer<typeof iniciarFormSchema>,
+): Promise<{ uuid: string; error: string | null }> {
+	return fetch(`${process.env.URL}/api/members`, {
+		method: "POST",
+		headers: {
+			Authorization: `Bearer ${process.env.AUTHORIZED_KEY}`,
+			accept: "application/json",
+			cache: "no-cache",
+		},
+		body: JSON.stringify(data),
+	}).then((res) => res.json())
 }
 
 export async function updateFormulario(
-	values: z.infer<typeof usuarioFormSchema>,
 	id: string,
-): Promise<{ error: boolean }> {
+	values: z.infer<typeof usuarioFormSchema>,
+): Promise<{ error: string | null }> {
 	try {
-		const response = await fetch(`${URL_API}/participantes?id=eq.${id}`, {
+		await fetch(`${process.env.URL}/api/members/${id}`, {
 			method: "PUT",
 			headers: {
-				"Content-Type": "application/json",
-				apikey: `${API_KEY}`,
+				Authorization: `Bearer ${process.env.AUTHORIZED_KEY}`,
+				accept: "application/json",
+				cache: "no-store",
 			},
-			body: JSON.stringify({ ...values, status: "Pendente" }),
+			body: JSON.stringify({ ...values, status: "Pendente", pageId: id }),
 		})
 
-		if (!response.ok) {
-			toast({
-				title: "Erro ao criar formulário",
-				description: "Esse email já foi cadastrado",
-			})
-			return { error: true }
-		}
-
-		toast({
-			title: "Formulário criado com sucesso",
-			description: "Você será redirecionado para a página do formulário",
-		})
-
-		return { error: false }
+		return { error: null }
 	} catch {
-		toast({
-			title: "Erro ao criar formulário",
-			description:
-				"Houve um erro ao tentar criar o formulário. Tente novamente.",
-		})
-		return { error: true }
+		return { error: "Erro ao criar formulário" }
 	}
 }
 
-export async function addAuthorized(data: { email: string; role: string }) {
-	try {
-		const response = await fetch(`${URL_API}/autorizados`, {
+export async function getAuthorized(): Promise<ResponseData<AuthorizedUser>> {
+	const response = await fetch(`${process.env.URL}/api/authorized`, {
+		headers: {
+			Authorization: `Bearer ${process.env.AUTHORIZED_KEY}`,
+			accept: "application/json",
+			cache: "no-store",
+		},
+	}).then((req) => req.json())
+
+	if (!response) {
+		return { data: [], error: `Error-response: ${response.error}` }
+	}
+	return { data: response.data, error: `Error-ok: ${response.error}` }
+}
+
+export async function deleteAuthorized(
+	id: string,
+): Promise<{ success: boolean; error: string | null }> {
+	const response = await fetch(`${process.env.URL}/api/authorized/${id}`, {
+		method: "DELETE",
+		headers: {
+			Authorization: `Bearer ${process.env.AUTHORIZED_KEY}`,
+			accept: "application/json",
+			cache: "no-store",
+		},
+	})
+	if (!response.ok) {
+		return { success: false, error: "Failed to delete authorized user" }
+	}
+	return { success: true, error: null }
+}
+export async function addAuthorized({
+	email,
+	role,
+}: { email: string; role: string }) {
+	const authorized: { data: AuthorizedUser[]; error: string | null } =
+		await fetch(`${process.env.URL}/api/authorized/`, {
 			method: "POST",
 			headers: {
-				"Content-Type": "application/json",
-				apikey: `${API_KEY}`,
+				Authorization: `Bearer ${process.env.AUTHORIZED_KEY}`,
+				accept: "application/json",
+				cache: "no-cache",
 			},
-			body: JSON.stringify(data),
-		})
-
-		if (!response.ok) {
-			throw new Error("Erro ao adicionar autorizado")
-		}
-
-		return { error: false }
-	} catch {
-		toast({
-			title: "Erro ao adicionar autorizado",
-			description:
-				"Houve um erro ao tentar adicionar o autorizado. Tente novamente.",
-		})
-		return { error: true }
-	}
-}
-
-export async function deleteAuthorized(email: string) {
-	try {
-		const getResponse = await fetch(
-			`${URL_API}/autorizados?email=eq.${email}`,
-			{
-				headers: {
-					"Content-Type": "application/json",
-					apikey: `${API_KEY}`,
-				},
-			},
-		)
-		if (!getResponse.ok) {
-			toast({
-				title: "Erro ao buscar autorizado",
-			})
-		}
-		const authorizedUsers = await getResponse.json()
-		console.log(authorizedUsers)
-		if (
-			!authorizedUsers ||
-			authorizedUsers.length === 0 ||
-			!authorizedUsers[0].id
-		) {
-			toast({
-				title: "Erro autorizado não encontrado",
-			})
-		}
-
-		const response = await fetch(
-			`${URL_API}/autorizados?id=eq.${authorizedUsers[0].id}`,
-			{
-				method: "DELETE",
-				headers: {
-					"Content-Type": "application/json",
-					apikey: `${API_KEY}`,
-				},
-			},
-		)
-		if (!response.ok) {
-			throw new Error("Erro ao deletar autorizado")
-		}
-		return { error: false }
-	} catch (error) {
-		toast({
-			title: "Erro ao deletar autorizado",
-			description: `Ocorreu o erro ${error}`,
-		})
-		return { error: true }
-	}
+			body: JSON.stringify({ email, role }),
+		}).then((res) => res.json())
+	return authorized.data
 }

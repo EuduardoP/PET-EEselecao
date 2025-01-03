@@ -25,11 +25,13 @@ import {
 	SelectValue,
 } from "@/components/ui/select"
 import { toast } from "@/hooks/use-toast"
+import { createSelecao } from "@/http/api"
 import { cn } from "@/lib/utils"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { CalendarIcon } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 import type { DateRange } from "react-day-picker"
 import { useForm } from "react-hook-form"
@@ -39,7 +41,7 @@ export const createFormSchema = z.object({
 	semestre: z.string({
 		required_error: "Semestre é obrigatório",
 	}),
-	dateRange: z.object({
+	data: z.object({
 		from: z.date(),
 		to: z.date(),
 	}),
@@ -51,29 +53,40 @@ export const createFormSchema = z.object({
 export default function FormInput() {
 	const [date, setDate] = useState<DateRange | undefined>()
 	const [editalOpen, setEditalOpen] = useState<boolean>(false)
-	//const router = useRouter()
+	const router = useRouter()
 	const form = useForm<z.infer<typeof createFormSchema>>({
 		resolver: zodResolver(createFormSchema),
 	})
 
-	function onSubmit(data: z.infer<typeof createFormSchema>) {
-		//const yearValue = format(data.dateRange.from, "yyyy")
-		//const semestre = data.semestre
+	async function onSubmit(data: z.infer<typeof createFormSchema>) {
+		const response = await createSelecao(data)
+		const yearValue = format(data.data.from, "yyyy")
+
+		if (response.status === 409) {
+			toast({
+				title: "Seleção já existe",
+				description:
+					"Você deve arquivar a seleção atual antes de criar uma nova",
+				variant: "destructive",
+			})
+			return
+		}
+
+		if (response.ok) {
+			toast({
+				title: "Seleção criada com sucesso!",
+				description: "Redirecionando para a avaliação...",
+			})
+			router.push(`/${data.semestre}${yearValue}/participantes`)
+			return
+		}
 
 		toast({
-			title: "Seleção criada com sucesso!",
-			description: "Redirecionando para a avaliação...",
-			// description: (
-			// 	<pre className="bg-muted p-4 rounded-md">
-			// 		{JSON.stringify(data, null, 2)}
-			// 	</pre>
-			// ),
+			title: "Erro ao criar seleção",
+			description: "Tente novamente mais tarde",
+			variant: "destructive",
 		})
-		console.log(data)
-		//createSelecao(data)
-		//router.push(`/${semestre}${yearValue}/participantes`)
 	}
-
 	return (
 		<Form {...form}>
 			<form
@@ -106,7 +119,7 @@ export default function FormInput() {
 					/>
 					<FormField
 						control={form.control}
-						name="dateRange"
+						name="data"
 						render={({ field }) => (
 							<FormItem>
 								<Popover>
@@ -162,16 +175,15 @@ export default function FormInput() {
 					/>
 					<Button
 						disabled={
-							!form.watch("dateRange") ||
-							!form.watch("dateRange").to ||
-							form.watch("semestre") === ""
+							typeof form.watch("semestre") === "undefined" ||
+							typeof form.watch("data.from") === "undefined" ||
+							typeof form.watch("data.to") === "undefined"
 						}
-						type="button"
 						className="flex items-center px-3 py-1.5 gap-1.5 rounded-lg font-medium text-sm"
 						onClick={() => setEditalOpen(true)}
 					>
 						Essa é a data
-					</Button>
+					</Button>{" "}
 				</div>
 				<div className="flex gap-2 items-center">
 					{editalOpen && (

@@ -1,5 +1,6 @@
 "use client"
 
+import type { AuthorizedUser } from "@/app/api/authorized/route"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -14,11 +15,10 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/sheet"
-import type { AuthorizedUser } from "@/http/db"
+import { type ResponseData, deleteAuthorized, getAuthorized } from "@/http/api"
 import { queryClient } from "@/lib/reactQueryProvider"
-import { createSupabaseBrowser } from "@/utils/supabase/client"
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { PlusCircle, Settings2, Trash2 } from "lucide-react"
+import { Loader2, PlusCircle, Settings2, Trash2 } from "lucide-react"
 import { useState } from "react"
 import { ScrollArea } from "../ui/scroll-area"
 import { Skeleton } from "../ui/skeleton"
@@ -29,9 +29,7 @@ export function SettingsSheet() {
 	const { data: authorized, isLoading } = useQuery({
 		queryKey: ["autorizados"],
 		queryFn: async () => {
-			const supabase = createSupabaseBrowser()
-			const { data } = await supabase.from("autorizados").select()
-			return data
+			return await getAuthorized()
 		},
 	})
 
@@ -43,17 +41,23 @@ export function SettingsSheet() {
 		}
 	}
 
-	const { mutateAsync: deleteUserFn } = useMutation({
+	const { mutateAsync: deleteUserFn, isPending } = useMutation({
 		mutationFn: async (params: { id: string }) => {
-			const supabase = createSupabaseBrowser()
-			await supabase.from("autorizados").delete().eq("id", params.id)
+			await deleteAuthorized(params.id)
 		},
 		onSuccess(_, variables) {
-			queryClient.setQueryData(["autorizados"], (oldData: AuthorizedUser[]) => {
-				return oldData.filter(
-					(item: AuthorizedUser) => item.id !== variables.id,
-				)
-			})
+			queryClient.setQueryData<ResponseData<AuthorizedUser>>(
+				["autorizados"],
+				(old) => {
+					if (old) {
+						return {
+							...old,
+							data: old.data.filter((item) => item.id !== variables.id),
+						}
+					}
+					return old
+				},
+			)
 		},
 	})
 
@@ -88,8 +92,8 @@ export function SettingsSheet() {
 									<Skeleton className="w-full h-5" />
 									<Skeleton className="w-full h-5" />
 								</div>
-							) : (
-								authorized?.map((autorizado) => (
+							) : authorized?.data ? (
+								authorized?.data.map((autorizado) => (
 									<div
 										key={autorizado.email}
 										className="flex flex-row justify-between items-center"
@@ -110,7 +114,12 @@ export function SettingsSheet() {
 											{autorizado.role}
 										</Label>
 										{autorizado.email !== "petee.dados@gmail.com" &&
-											autorizado.email !== "petengenhariaeletrica@ufsm.com" && (
+											autorizado.email !== "petengenhariaeletrica@ufsm.com" &&
+											(isPending ? (
+												<Button variant="outline" size="icon" disabled>
+													<Loader2 className="animate-spin" size={18} />
+												</Button>
+											) : (
 												<Button
 													variant="outline"
 													size="icon"
@@ -118,10 +127,10 @@ export function SettingsSheet() {
 												>
 													<Trash2 size={18} />
 												</Button>
-											)}
+											))}
 									</div>
 								))
-							)}
+							) : null}
 							<Separator />
 
 							{isOpen && <AddForm handleClose={() => setIsOpen(false)} />}
