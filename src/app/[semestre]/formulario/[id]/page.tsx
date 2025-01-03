@@ -11,8 +11,8 @@ interface FormularioPageProps {
 }
 export default async function FormularioPage({ params }: FormularioPageProps) {
 	const selecao = await getSelecao()
-	//* Lembrar do ! na função isSelecaoOpen
-	if (selecao.data[0].data && isSelecaoOpen(selecao.data[0].data)) {
+
+	if (selecao.data[0].data && !isSelecaoOpen(selecao.data[0].data)) {
 		return (
 			<main className="flex flex-col items-center justify-center w-full h-full p-5 lg:px-[20rem] gap-4">
 				<Card className="flex flex-col gap-4 p-4 w-full container text-center">
